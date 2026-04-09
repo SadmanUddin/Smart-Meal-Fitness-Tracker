@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SmartMeal.core.Models
 {
-    internal class User
+    public class User
     {
         //Foundation Properties
         public Guid Id { get; set; }

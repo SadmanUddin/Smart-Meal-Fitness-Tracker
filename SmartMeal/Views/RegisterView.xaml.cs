@@ -12,27 +12,34 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using SmartMeal.core.Services;
 
 namespace SmartMeal.Views
 {
-    /// <summary>
-    /// Interaction logic for RegisterView.xaml
-    /// </summary>
     public partial class RegisterView : UserControl
     {
+        private readonly AuthService _authService;
         public RegisterView()
         {
             InitializeComponent();
+            _authService = ((MainWindow)Application.Current.MainWindow).AuthService;
         }
         public void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Yo yo yo");
+            var result = _authService.RegisterUser(FullNameTextBox.Text, EmailTextBox.Text, PasswordBox.Password, ConfirmPasswordBox.Password);
+            MessageBox.Show(result.Message); 
+
+            if(result.Success)
+            {
+                var mainWindow = (MainWindow)Application.Current.MainWindow;
+                mainWindow.Navigate(new LoginView());
+            }
         }
         public void LoginText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             // Navigate to LoginView
             var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.MainContent.Content = new LoginView();
+            mainWindow.Navigate(new LoginView());
         }
     }
 }

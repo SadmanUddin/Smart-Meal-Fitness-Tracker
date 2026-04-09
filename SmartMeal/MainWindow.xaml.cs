@@ -10,18 +10,22 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using SmartMeal.Views;
+using SmartMeal.core.Services;
 
 namespace SmartMeal
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+        public AuthService AuthService { get; } = new AuthService();
         public MainWindow()
         {
             InitializeComponent();
             MainContent.Content = new RegisterView();
+        }
+
+        public void Navigate(UserControl View) // navigate method to switchhh
+        {
+            MainContent.Content = View;
         }
     }
 }

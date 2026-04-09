@@ -12,27 +12,27 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using SmartMeal.core.Services;
 namespace SmartMeal.Views
 {
-    /// <summary>
-    /// Interaction logic for LoginView.xaml
-    /// </summary>
     public partial class LoginView : UserControl
     {
+        private readonly AuthService _authService;
+
         public LoginView()
         {
             InitializeComponent();
+            _authService = ((MainWindow)Application.Current.MainWindow).AuthService;
         }
         public void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Yup");
+            var result = _authService.LoginUser(EmailTextBox.Text, PasswordBox.Password);
+            MessageBox.Show(result.Message);
         }
         public void RegisterText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Navigate to RegisterView
             var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.MainContent.Content = new RegisterView();
+            mainWindow.Navigate(new RegisterView());
         }
     }
 }
