@@ -11,26 +11,26 @@ namespace SmartMeal.core.Services
 
     public class AuthService
     {
-        private static readonly List<User> users = new();
+        private static readonly List<User> users = new(); // temp authentiction...gonna switch to db later...encapsulation
         public (bool Success, string Message) RegisterUser(string name, string email, string password,string confirmPassword)
         {
             if(string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(confirmPassword))
             {
-                  return (false, "Please fill all the fields");
+                  return (false, "Please fill all the fields"); // check for any empty fields
             }
             if(!email.Contains("@") || !email.Contains("."))
             {
-                return (false, "Invalid Format!!");
+                return (false, "Invalid Format!!"); // check formation 
             }
             if(password != confirmPassword)
             {
-                return (false, "Passwords do not match");
+                return (false, "Passwords do not match"); // confirmation and real password matching
             }
             foreach(var i in users)
             {
                 if(i.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
                 {
-                    return (false, "Email already exists");
+                    return (false, "Email already exists"); // check if email exists or not
                 }
             }
             var user = new User
@@ -71,7 +71,7 @@ namespace SmartMeal.core.Services
             }
             return (true, "Login successful", user);
         }
-        private string HashPassword(string password)
+        private string HashPassword(string password) // using cryptography for password hashing
         {
             using SHA256 sha256 = SHA256.Create();
             byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));

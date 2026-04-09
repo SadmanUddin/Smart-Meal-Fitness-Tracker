@@ -29,7 +29,7 @@ namespace SmartMeal.Views
             var result = _authService.RegisterUser(FullNameTextBox.Text, EmailTextBox.Text, PasswordBox.Password, ConfirmPasswordBox.Password);
             MessageBox.Show(result.Message); 
 
-            if(result.Success)
+            if(result.Success) // sucessful registration will navigate to LP
             {
                 var mainWindow = (MainWindow)Application.Current.MainWindow;
                 mainWindow.Navigate(new LoginView());
@@ -39,7 +39,7 @@ namespace SmartMeal.Views
         {
             // Navigate to LoginView
             var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.Navigate(new LoginView());
+            mainWindow.Navigate(new LoginView()); // using navigate method
         }
     }
 }

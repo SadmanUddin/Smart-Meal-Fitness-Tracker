@@ -19,7 +19,7 @@ namespace SmartMeal.Views
     {
         private readonly AuthService _authService;
 
-        public LoginView()
+        public LoginView() // constructor to initialize auth
         {
             InitializeComponent();
             _authService = ((MainWindow)Application.Current.MainWindow).AuthService;
