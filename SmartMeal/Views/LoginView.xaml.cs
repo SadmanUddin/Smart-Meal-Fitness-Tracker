@@ -28,6 +28,11 @@ namespace SmartMeal.Views
         {
             var result = _authService.LoginUser(EmailTextBox.Text, PasswordBox.Password);
             MessageBox.Show(result.Message);
+            if (result.Success)
+            {
+                var mainWindow = (MainWindow)Application.Current.MainWindow;
+                mainWindow.Navigate(new DashboardView());
+            }
         }
         public void RegisterText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {

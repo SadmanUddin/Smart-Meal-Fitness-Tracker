@@ -16,7 +16,9 @@ namespace SmartMeal
 {
     public partial class MainWindow : Window
     {
+        // adding services globally
         public AuthService AuthService { get; } = new AuthService();
+        public MealService MealService { get; } = new MealService();
         public MainWindow()
         {
             InitializeComponent();
