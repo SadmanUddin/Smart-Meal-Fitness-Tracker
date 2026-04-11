@@ -19,6 +19,7 @@ namespace SmartMeal
         // adding services globally
         public AuthService AuthService { get; } = new AuthService();
         public MealService MealService { get; } = new MealService();
+        public ActService ActService { get; } = new ActService();
         public MainWindow()
         {
             InitializeComponent();

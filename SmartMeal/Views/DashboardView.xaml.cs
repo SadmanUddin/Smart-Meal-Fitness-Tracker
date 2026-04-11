@@ -19,7 +19,8 @@ namespace SmartMeal.Views
     public partial class DashboardView : UserControl
     {
         private readonly MealService mealService;
-        private void LoadMeals()
+        private readonly ActService activityService;
+        private void LoadMeals() //This methods load the meals and calculate the calories...also display recent meals in dashboard...
         {
             var meals = mealService.GetMeals();
             MealsCountBlock.Text = meals.Count.ToString();
@@ -28,7 +29,7 @@ namespace SmartMeal.Views
             {
                 totalCalories += i.Calories;
             }
-            CaloriesGoalBlock.Text = totalCalories.ToString();
+            CaloriesConsumedBlock.Text = totalCalories.ToString();
             if (meals.Count > 0)
             {
                 var latestMeal = meals[meals.Count - 1];
@@ -40,16 +41,57 @@ namespace SmartMeal.Views
                 RecentMealsTextBlock.Text = "No meals added yet.";
             }
         }
-        public DashboardView()
+        private void LoadActivities() //This method load the activities and calculate the calories burned....also display recent activity in dashboard...
+        {
+            var meals = mealService.GetMeals();
+            var activities = activityService.GetActivities();
+
+            int totalCaloriesBurned = 0;
+            int totalMealCalories = 0;
+
+            foreach (var i in meals)
+            {
+                totalMealCalories += i.Calories;
+            }
+            foreach (var i in activities)
+            {
+                totalCaloriesBurned += i.CaloriesBurned;
+            }
+
+            int balance = totalMealCalories - totalCaloriesBurned;
+            ActivitiesCountBlock.Text = activities.Count.ToString();
+            CaloriesBurnedBlock.Text = totalCaloriesBurned.ToString();
+            BalanceBlock.Text = balance.ToString();
+            if(activities.Count > 0)
+            {
+                var latestActivity = activities[activities.Count - 1];
+                RecentActivitiesTextBlock.Text = $"{latestActivity.Name} - {latestActivity.CaloriesBurned} cal burned";
+            }
+            else
+            {
+                RecentActivitiesTextBlock.Text = "No activities added yet.";
+            }
+
+
+
+        }
+        public DashboardView() //constructor
         {
             InitializeComponent();
             mealService = ((MainWindow)Application.Current.MainWindow).MealService;
+            activityService = ((MainWindow)Application.Current.MainWindow).ActService;
             LoadMeals();//calling the methond to load the meals when the dashboard
+            LoadActivities();//calling the method to load the activities when the dashboard is loaded
         }
         private void AddMeal_Click(object sender, RoutedEventArgs e)
         {
             var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new AddMealView());
+        }
+        private void AddActivity_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.Navigate(new AddActivityView());
         }
     }
 }
