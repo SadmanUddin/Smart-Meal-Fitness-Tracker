@@ -20,6 +20,7 @@ namespace SmartMeal
         public AuthService AuthService { get; } = new AuthService();
         public MealService MealService { get; } = new MealService();
         public ActService ActService { get; } = new ActService();
+        public GoalService GoalService { get; } = new GoalService();
         public MainWindow()
         {
             InitializeComponent();

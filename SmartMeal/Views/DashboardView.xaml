@@ -70,7 +70,9 @@
         <Grid Grid.Column="1" Margin="28">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="24"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="20"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="24"/>
                 <RowDefinition Height="*"/>
@@ -106,17 +108,53 @@
                 </Border>
             </Grid>
 
+            <!-- Separate Goal Card -->
+            <Border Grid.Row="2"
+                    Background="White"
+                    CornerRadius="18"
+                    Padding="20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Daily Calories Goal"
+                                   FontSize="14"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="CaloriesGoalBlock"
+                                   Text="0"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,6,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Content="Set Goal"
+                            Width="120"
+                            Height="38"
+                            Background="#F59E0B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontWeight="SemiBold"
+                            VerticalAlignment="Center"
+                            Click="SetGoal_Click"/>
+                </Grid>
+            </Border>
+
             <!-- Summary Cards -->
-            <UniformGrid Grid.Row="2" Columns="5" Margin="0">
+            <UniformGrid Grid.Row="4" Columns="5" Margin="0">
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
                         Padding="18">
                     <StackPanel>
-                        <TextBlock Text="Calories Goal"
+                        <TextBlock Text="Calories Consumed"
                                    FontSize="13"
                                    Foreground="#6B7280"/>
-                        <TextBlock x:Name="CaloriesGoalBlock"
+                        <TextBlock x:Name="CaloriesConsumedBlock"
                                    Text="0"
                                    FontSize="24"
                                    FontWeight="Bold"
@@ -194,14 +232,13 @@
             </UniformGrid>
 
             <!-- Lower Section -->
-            <Grid Grid.Row="4">
+            <Grid Grid.Row="6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="24"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Main Panel -->
                 <Border Background="White"
                         CornerRadius="18"
                         Padding="24">
@@ -245,12 +282,12 @@
                                     Background="#F59E0B"
                                     Foreground="White"
                                     BorderThickness="0"
-                                    FontWeight="SemiBold"/>
+                                    FontWeight="SemiBold"
+                                    Click="SetGoal_Click"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- Side Panel -->
                 <Border Grid.Column="2"
                         Background="White"
                         CornerRadius="18"

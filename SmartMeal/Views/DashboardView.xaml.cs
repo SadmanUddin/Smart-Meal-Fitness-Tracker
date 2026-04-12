@@ -20,6 +20,7 @@ namespace SmartMeal.Views
     {
         private readonly MealService mealService;
         private readonly ActService activityService;
+        private readonly GoalService goalService;
         private void LoadMeals() //This methods load the meals and calculate the calories...also display recent meals in dashboard...
         {
             var meals = mealService.GetMeals();
@@ -57,12 +58,18 @@ namespace SmartMeal.Views
             {
                 totalCaloriesBurned += i.CaloriesBurned;
             }
+            var goal = goalService.GetGoal();
+            int dailyGoal = 0;
+            if (goal != null)
+            {
+                dailyGoal = goal.DailyCalorieGoal;
+            }
 
-            int balance = totalMealCalories - totalCaloriesBurned;
+            int balance = dailyGoal - totalMealCalories+ totalCaloriesBurned;
             ActivitiesCountBlock.Text = activities.Count.ToString();
             CaloriesBurnedBlock.Text = totalCaloriesBurned.ToString();
             BalanceBlock.Text = balance.ToString();
-            if(activities.Count > 0)
+            if (activities.Count > 0)
             {
                 var latestActivity = activities[activities.Count - 1];
                 RecentActivitiesTextBlock.Text = $"{latestActivity.Name} - {latestActivity.CaloriesBurned} cal burned";
@@ -72,14 +79,14 @@ namespace SmartMeal.Views
                 RecentActivitiesTextBlock.Text = "No activities added yet.";
             }
 
-
-
+            CaloriesGoalBlock.Text = dailyGoal.ToString();
         }
         public DashboardView() //constructor
         {
             InitializeComponent();
             mealService = ((MainWindow)Application.Current.MainWindow).MealService;
             activityService = ((MainWindow)Application.Current.MainWindow).ActService;
+            goalService = ((MainWindow)Application.Current.MainWindow).GoalService;
             LoadMeals();//calling the methond to load the meals when the dashboard
             LoadActivities();//calling the method to load the activities when the dashboard is loaded
         }
@@ -92,6 +99,11 @@ namespace SmartMeal.Views
         {
             var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new AddActivityView());
+        }
+        private void SetGoal_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.Navigate(new SetGoalView());
         }
     }
 }
