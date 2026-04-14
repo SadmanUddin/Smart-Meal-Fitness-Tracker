@@ -32,10 +32,17 @@ namespace SmartMeal.Views
                 MessageBox.Show("Please enter a valid number for calories.");
                 return;
             }
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            if (mainWindow.CurrentUser == null)
+            {
+                MessageBox.Show("No user logged in.");
+                return;
+            }
 
             var meal = new core.Models.Meal
             {
                 Id = Guid.NewGuid(),
+                UserId = mainWindow.CurrentUser.Id,
                 Name = MealNameTextBox.Text,
                 Calories = calories,
                 Category = ((ComboBoxItem)CategoryComboBox.SelectedItem)?.Content.ToString() ?? "",
@@ -43,7 +50,6 @@ namespace SmartMeal.Views
             };
             mealService.AddMeal(meal);
             MessageBox.Show("Meal added");
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new DashboardView());
         }
         private void Cancel_Click(object sender, RoutedEventArgs e)

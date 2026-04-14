@@ -11,6 +11,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using SmartMeal.Views;
 using SmartMeal.core.Services;
+using SmartMeal.core.Models;
 
 namespace SmartMeal
 {
@@ -21,6 +22,7 @@ namespace SmartMeal
         public MealService MealService { get; } = new MealService();
         public ActService ActService { get; } = new ActService();
         public GoalService GoalService { get; } = new GoalService();
+        public User? CurrentUser{ get; set; } // for holding the current user data while the app opens
         public MainWindow()
         {
             InitializeComponent();

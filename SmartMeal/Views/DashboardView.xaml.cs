@@ -23,7 +23,14 @@ namespace SmartMeal.Views
         private readonly GoalService goalService;
         private void LoadMeals() //This methods load the meals and calculate the calories...also display recent meals in dashboard...
         {
-            var meals = mealService.GetMeals();
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            if (mainWindow.CurrentUser == null)
+            {
+                MessageBox.Show("No user logged in.");
+                return;
+            }
+            var userId = mainWindow.CurrentUser.Id;
+            var meals = mealService.GetMealsByUser(userId);
             MealsCountBlock.Text = meals.Count.ToString();
             int totalCalories = 0;
             foreach (var i in meals)
@@ -44,8 +51,16 @@ namespace SmartMeal.Views
         }
         private void LoadActivities() //This method load the activities and calculate the calories burned....also display recent activity in dashboard...
         {
-            var meals = mealService.GetMeals();
-            var activities = activityService.GetActivities();
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            if (mainWindow.CurrentUser == null)
+            {
+                MessageBox.Show("No user logged in.");
+                return;
+            }
+            var userId = mainWindow.CurrentUser.Id;
+            var meals = mealService.GetMealsByUser(userId);
+            var activities = activityService.GetActivitiesByUser(userId);
+            var goal = goalService.GetGoal(userId);
 
             int totalCaloriesBurned = 0;
             int totalMealCalories = 0;
@@ -58,14 +73,13 @@ namespace SmartMeal.Views
             {
                 totalCaloriesBurned += i.CaloriesBurned;
             }
-            var goal = goalService.GetGoal();
             int dailyGoal = 0;
             if (goal != null)
             {
                 dailyGoal = goal.DailyCalorieGoal;
             }
 
-            int balance = dailyGoal - totalMealCalories+ totalCaloriesBurned;
+            int balance = dailyGoal - totalMealCalories+ totalCaloriesBurned; // Balance calculation
             ActivitiesCountBlock.Text = activities.Count.ToString();
             CaloriesBurnedBlock.Text = totalCaloriesBurned.ToString();
             BalanceBlock.Text = balance.ToString();
@@ -79,7 +93,24 @@ namespace SmartMeal.Views
                 RecentActivitiesTextBlock.Text = "No activities added yet.";
             }
 
-            CaloriesGoalBlock.Text = dailyGoal.ToString();
+            CaloriesGoalBlock.Text = dailyGoal.ToString(); // displying the daily goals of users
+        }
+        public void LoadGoal()
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            if (mainWindow.CurrentUser == null)
+            {
+                MessageBox.Show("No user logged in.");
+                return;
+            }
+            var userId = mainWindow.CurrentUser.Id;
+            var goal = goalService.GetGoal(userId);
+            int dailyGoal = 0;
+            if (goal != null)
+            {
+                dailyGoal = goal.DailyCalorieGoal;
+            }
+            CaloriesGoalBlock.Text = dailyGoal.ToString(); // displying the daily goals of users
         }
         public DashboardView() //constructor
         {
@@ -89,6 +120,7 @@ namespace SmartMeal.Views
             goalService = ((MainWindow)Application.Current.MainWindow).GoalService;
             LoadMeals();//calling the methond to load the meals when the dashboard
             LoadActivities();//calling the method to load the activities when the dashboard is loaded
+            LoadGoal();//calling the method to load the goal when the dashboard is loaded
         }
         private void AddMeal_Click(object sender, RoutedEventArgs e)
         {
@@ -104,6 +136,12 @@ namespace SmartMeal.Views
         {
             var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new SetGoalView());
+        }
+        private void BackToLog_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.CurrentUser = null; // Clear the current user
+            mainWindow.Navigate(new LoginView()); // Navigate back to login view
         }
     }
 }

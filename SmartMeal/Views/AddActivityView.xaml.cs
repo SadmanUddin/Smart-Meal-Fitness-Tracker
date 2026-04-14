@@ -38,17 +38,22 @@ namespace SmartMeal.Views
                 MessageBox.Show("Please enter a valid number for duration.");
                 return;
             }
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            if (mainWindow.CurrentUser == null)
+            {
+                MessageBox.Show("No user logged in.");
+                return;
+            }
             var activity = new Activity
             {
                 Id = Guid.NewGuid(),
-                UserId = Guid.Empty, 
+                UserId = mainWindow.CurrentUser.Id,
                 Name = ActivityNameTextBox.Text,
                 CaloriesBurned = caloriesBurned,
                 Date = DateTime.Now
             };
             activityService.AddActivity(activity);
             MessageBox.Show("Activity added");
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new DashboardView());
         }
         private void Cancel_Click(object sender, RoutedEventArgs e)

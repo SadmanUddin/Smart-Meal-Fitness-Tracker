@@ -13,14 +13,24 @@ namespace SmartMeal.core.Services
 
         public void AddGoal(FitGoal goal)
         {   
-            Goals.Clear();
+            for(int i = 0; i < Goals.Count; i++)
+            {
+                if(Goals[i].UserId == goal.UserId)
+                {
+                    Goals[i] = goal;
+                    return;
+                }
+            }
             Goals.Add(goal);
         }
-        public FitGoal? GetGoal()
+        public FitGoal? GetGoal(Guid userId)
         {
-            if(Goals.Count > 0)
+            foreach(var goal in Goals)
             {
-                return Goals[0];
+                if(goal.UserId == userId)
+                {
+                    return goal;
+                }
             }
             return null;
         }

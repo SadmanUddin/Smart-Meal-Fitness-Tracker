@@ -31,6 +31,7 @@ namespace SmartMeal.Views
             if (result.Success)
             {
                 var mainWindow = (MainWindow)Application.Current.MainWindow;
+                mainWindow.CurrentUser = result.User; // set the current user in main window
                 mainWindow.Navigate(new DashboardView());
             }
         }

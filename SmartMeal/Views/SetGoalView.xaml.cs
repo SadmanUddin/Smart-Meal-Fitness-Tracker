@@ -32,16 +32,21 @@ namespace SmartMeal.Views
                 MessageBox.Show("Please enter a valid number for calorie goal.");
                 return;
             }
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            if (mainWindow.CurrentUser == null)
+            {
+                MessageBox.Show("No user logged in.");
+                return;
+            }
             var goal = new FitGoal
             {
                 Id = Guid.NewGuid(),
-                UserId = Guid.Empty, 
+                UserId = mainWindow.CurrentUser.Id, 
                 DailyCalorieGoal = calorieGoal,
                 CreatedAt = DateTime.Now
             };
             goalService.AddGoal(goal);
             MessageBox.Show("Goal set successfully!");
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new DashboardView());
         }
          private void Cancel_Click(object sender, RoutedEventArgs e)
