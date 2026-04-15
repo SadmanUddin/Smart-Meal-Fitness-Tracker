@@ -30,6 +30,17 @@ namespace SmartMeal.core.Services
         {
             return Meals;
         }
+        public void DeleteMeal(Guid mealID)
+        {
+            for(int i=0; i<Meals.Count; i++)
+            {
+                if (Meals[i].Id == mealID)
+                {
+                    Meals.RemoveAt(i);
+                    break;
+                }
+            }
+        }
 
     }
 }
