@@ -140,8 +140,13 @@ namespace SmartMeal.Views
         private void BackToLog_Click(object sender, RoutedEventArgs e)
         {
             var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.CurrentUser = null; // Clear the current user
-            mainWindow.Navigate(new LoginView()); // Navigate back to login view
+            var result = MessageBox.Show("Are you sure you want to logout?","Confirm Logout", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                mainWindow.CurrentUser = null; // Clear the current user
+                MessageBox.Show("You have been logged out.", "Logout", MessageBoxButton.OK, MessageBoxImage.Information);
+                mainWindow.Navigate(new LoginView()); // Navigate back to login view
+            }
         }
     }
 }
