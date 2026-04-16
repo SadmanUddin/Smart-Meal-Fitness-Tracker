@@ -47,7 +47,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Activities_Click"/>
 
                 <Button Content="History"
                         Height="42"
@@ -55,7 +56,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="History_Click"/>
 
                 <Button Content="Profile"
                         Height="42"
@@ -63,7 +65,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Profile_Click"/>
             </StackPanel>
         </Border>
 
@@ -114,10 +117,10 @@
                           HeadersVisibility="Column"
                           RowHeight="40">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Meal Name" Binding="{Binding Name}" Width="*"/>
-                        <DataGridTextColumn Header="Calories" Binding="{Binding Calories}" Width="120"/>
-                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140"/>
-                        <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="180"/>
+                        <DataGridTextColumn Header="Food" Binding="{Binding FoodName}" Width="*"/>
+                        <DataGridTextColumn Header="Grams" Binding="{Binding Grams}" Width="120"/>
+                        <DataGridTextColumn Header="Meal Type" Binding="{Binding MealTypeName}" Width="140"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding LogDate}" Width="180"/>
                         <DataGridTemplateColumn Header="Action" Width="120">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -127,7 +130,7 @@
                                             Background="#EF4444"
                                             Foreground="White"
                                             BorderThickness="0"
-                                            Tag="{Binding Id}"
+                                            Tag="{Binding MealLogId}"
                                             Click="DeleteMeal_Click"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

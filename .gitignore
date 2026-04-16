@@ -2,6 +2,7 @@
 bin/
 obj/
 *.user
+supabase.config.json
 *.suo
 *.cache
 *.pdb

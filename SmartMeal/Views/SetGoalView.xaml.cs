@@ -1,58 +1,72 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using SmartMeal.core.Services;
-using SmartMeal.core.Models;
 
 namespace SmartMeal.Views
 {
     public partial class SetGoalView : UserControl
     {
-        private readonly GoalService goalService;
+        private readonly MainWindow _mainWindow;
+        private readonly GoalService _goalService;
+        private readonly AuthService _authService;
+
         public SetGoalView()
         {
             InitializeComponent();
-            goalService = ((MainWindow)Application.Current.MainWindow).GoalService;
+            _mainWindow = (MainWindow)Application.Current.MainWindow;
+            _goalService = _mainWindow.GoalService;
+            _authService = _mainWindow.AuthService;
         }
-        private void SetGoal_Click(object sender, RoutedEventArgs e)
+
+        private async void SetGoal_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(DailyGoalTextBox.Text, out int calorieGoal))
+            if (!int.TryParse(DailyGoalTextBox.Text, out int calorieGoal) || calorieGoal <= 0)
             {
                 MessageBox.Show("Please enter a valid number for calorie goal.");
                 return;
             }
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
-            if (mainWindow.CurrentUser == null)
+
+            var userId = _authService.CurrentUser?.Id;
+            if (string.IsNullOrWhiteSpace(userId))
             {
                 MessageBox.Show("No user logged in.");
                 return;
             }
-            var goal = new FitGoal
+
+            try
             {
-                Id = Guid.NewGuid(),
-                UserId = mainWindow.CurrentUser.Id, 
-                DailyCalorieGoal = calorieGoal,
-                CreatedAt = DateTime.Now
-            };
-            goalService.AddGoal(goal);
-            MessageBox.Show("Goal set successfully!");
-            mainWindow.Navigate(new DashboardView());
+                await _goalService.UpsertGoalAsync(userId, calorieGoal);
+                MessageBox.Show("Goal set successfully!");
+                _mainWindow.Navigate(new DashboardView());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not save goal: {ex.Message}",
+                    "Save Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
-         private void Cancel_Click(object sender, RoutedEventArgs e)
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.Navigate(new DashboardView());
+            _mainWindow.Navigate(new DashboardView());
+        }
+
+        private void Dashboard_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new DashboardView());
+        }
+
+        private void Meals_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new MealsView());
+        }
+
+        private void Activities_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new AddActivityView());
         }
     }
 }

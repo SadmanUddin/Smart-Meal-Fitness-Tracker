@@ -1,65 +1,105 @@
-﻿using SmartMeal.core.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using SmartMeal.core.Models;
-
+using SmartMeal.core.Services;
 
 namespace SmartMeal.Views
 {
     public partial class AddActivityView : UserControl
     {
-        private readonly ActService activityService;
+        private readonly MainWindow _mainWindow;
+        private readonly ActService _activityService;
+        private readonly AuthService _authService;
+
         public AddActivityView()
         {
             InitializeComponent();
-            activityService = ((MainWindow)Application.Current.MainWindow).ActService;
+            _mainWindow = (MainWindow)Application.Current.MainWindow;
+            _activityService = _mainWindow.ActService;
+            _authService = _mainWindow.AuthService;
         }
-        private void AddActivity_Click(object sender, RoutedEventArgs e)
+
+        private async void AddActivity_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(CaloriesBurnedTextBox.Text, out int caloriesBurned))
+            if (string.IsNullOrWhiteSpace(ActivityNameTextBox.Text))
+            {
+                MessageBox.Show("Please enter an activity name.");
+                return;
+            }
+            if (!int.TryParse(CaloriesBurnedTextBox.Text, out int caloriesBurned) || caloriesBurned < 0)
             {
                 MessageBox.Show("Please enter a valid number for calories burned.");
                 return;
             }
-            if (!int.TryParse(DurationTextBox.Text, out int durationMinutes))
+            if (!int.TryParse(DurationTextBox.Text, out int durationMinutes) || durationMinutes <= 0)
             {
                 MessageBox.Show("Please enter a valid number for duration.");
                 return;
             }
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
-            if (mainWindow.CurrentUser == null)
+
+            var userId = _authService.CurrentUser?.Id;
+            if (string.IsNullOrWhiteSpace(userId))
             {
                 MessageBox.Show("No user logged in.");
                 return;
             }
+
             var activity = new Activity
             {
-                Id = Guid.NewGuid(),
-                UserId = mainWindow.CurrentUser.Id,
-                Name = ActivityNameTextBox.Text,
+                UserId = userId,
+                Name = ActivityNameTextBox.Text.Trim(),
                 CaloriesBurned = caloriesBurned,
-                Date = DateTime.Now
+                DurationMinutes = durationMinutes,
+                LoggedAt = DateTime.UtcNow
             };
-            activityService.AddActivity(activity);
-            MessageBox.Show("Activity added");
-            mainWindow.Navigate(new DashboardView());
+
+            try
+            {
+                await _activityService.AddActivityAsync(activity);
+                MessageBox.Show("Activity added successfully!");
+                _mainWindow.Navigate(new DashboardView());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not save activity: {ex.Message}",
+                    "Save Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
+
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.Navigate(new DashboardView());
+            _mainWindow.Navigate(new DashboardView());
+        }
+
+        private void Dashboard_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new DashboardView());
+        }
+
+        private void Meals_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new MealsView());
+        }
+
+        private void History_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(
+                "Weight history view is not implemented yet.",
+                "Coming Soon",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        private void Profile_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(
+                "Profile view is not implemented yet.",
+                "Coming Soon",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
     }
 }

@@ -1,35 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SmartMeal.core.Models;
+using Supabase;
+
 namespace SmartMeal.core.Services
 {
     public class ActService
     {
-        private static readonly List<Activity> Activities = new List<Activity>();
+        private readonly Client _client;
 
-        public void AddActivity(Activity activity)
+        public ActService(Client client)
         {
-            Activities.Add(activity);
-        }
-        public List<Activity> GetActivities()
-        {
-            return Activities;
+            _client = client;
         }
 
-        public List<Activity> GetActivitiesByUser(Guid userId)
-            {
-                var result = new List<Activity>(); //creating an empty list each time for each user
-                foreach (var i in Activities) //using loop to filter the meals for specific user
-                {
-                    if (i.UserId == userId) // Check if the meal belongs to the user
-                    {
-                        result.Add(i);
-                    }
-                }
-                return result;
+        public async Task AddActivityAsync(Activity activity)
+        {
+            await _client.From<Activity>().Insert(activity);
+        }
+
+        public async Task<List<Activity>> GetActivitiesByUserAsync(string userId)
+        {
+            var result = await _client.From<Activity>()
+                .Where(a => a.UserId == userId)
+                .Order("logged_at", Supabase.Postgrest.Constants.Ordering.Ascending)
+                .Get();
+            return result.Models;
         }
     }
 }
