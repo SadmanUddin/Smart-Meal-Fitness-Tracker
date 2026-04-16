@@ -17,9 +17,9 @@ namespace SmartMeal.core.Models
         // The primary key — a UUID string that comes directly from Supabase Auth.
         // When a user registers, Supabase Auth creates an auth account and returns a UUID.
         // We use that same UUID here so the two systems stay in sync.
-        // The second parameter (false) on [PrimaryKey] tells the ORM NOT to auto-generate
-        // this value — we supply it ourselves from the Auth response.
-        [PrimaryKey("id", false)]
+        // Set shouldInsert = true so Postgrest sends this value on INSERT.
+        // This table's id is NOT database-generated; it must match auth.uid().
+        [PrimaryKey("id", true)]
         public string Id { get; set; } = string.Empty;
 
         // The user's display name, collected on the registration form.
