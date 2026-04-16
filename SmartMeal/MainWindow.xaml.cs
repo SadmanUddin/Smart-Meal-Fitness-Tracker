@@ -20,6 +20,10 @@ namespace SmartMeal
         // and tells the developer to fill in their real credentials first.
         private const string UrlPlaceholder = "YOUR_SUPABASE_PROJECT_URL";
         private const string KeyPlaceholder = "YOUR_SUPABASE_ANON_KEY";
+        private const string RedirectPlaceholder = "YOUR_SUPABASE_EMAIL_REDIRECT_URL";
+        private const string UrlEnvVar = "SMARTMEAL_SUPABASE_URL";
+        private const string KeyEnvVar = "SMARTMEAL_SUPABASE_ANON_KEY";
+        private const string RedirectEnvVar = "SMARTMEAL_SUPABASE_EMAIL_REDIRECT_URL";
 
         // All services are initialised asynchronously in InitializeAsync() once the Supabase
         // client is ready. They are declared as null! here because they cannot be created
@@ -67,18 +71,7 @@ namespace SmartMeal
         // builds all services, then shows the first screen (RegisterView).
         private async Task InitializeAsync()
         {
-            // Look for the config file next to the compiled executable.
-            // If a developer clones the repo for the first time and hasn't created this file yet,
-            // we give them a clear message telling them exactly what is missing.
-            var configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "supabase.config.json");
-            if (!File.Exists(configPath))
-                throw new FileNotFoundException("supabase.config.json was not found in the output folder.", configPath);
-
-            // Read and deserialise the config. If the JSON is malformed or empty, we throw here
-            // rather than getting a cryptic NullReferenceException later.
-            var json = await File.ReadAllTextAsync(configPath);
-            var config = JsonSerializer.Deserialize<SupabaseConfig>(json)
-                ?? throw new InvalidOperationException("Could not load supabase.config.json");
+            var config = await LoadSupabaseConfigAsync();
 
             // Make sure the developer replaced the placeholder values with real credentials.
             ValidateConfig(config);
@@ -90,7 +83,7 @@ namespace SmartMeal
 
             // Build every service, handing each one the same live Supabase client.
             // Views pull these services out of MainWindow using the public properties above.
-            AuthService = new AuthService(provider.Client);
+            AuthService = new AuthService(provider.Client, config.SupabaseEmailRedirectUrl);
             MealService = new MealService(provider.Client);
             FoodService = new FoodService(provider.Client);
             GoalService = new GoalService(provider.Client);
@@ -110,6 +103,47 @@ namespace SmartMeal
             MainContent.Content = view;
         }
 
+        private async Task<SupabaseConfig> LoadSupabaseConfigAsync()
+        {
+            // Safe option 1: VS environment variables (recommended for local secrets).
+            var envUrl = Environment.GetEnvironmentVariable(UrlEnvVar);
+            var envKey = Environment.GetEnvironmentVariable(KeyEnvVar);
+            var envRedirect = Environment.GetEnvironmentVariable(RedirectEnvVar);
+            if (!string.IsNullOrWhiteSpace(envUrl) && !string.IsNullOrWhiteSpace(envKey))
+                return new SupabaseConfig(envUrl.Trim(), envKey.Trim(), NormalizeOptional(envRedirect));
+
+            // Safe option 2: local config files (gitignored).
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var candidatePaths = new[]
+            {
+                Path.Combine(baseDir, "supabase.config.local.json"),
+                Path.Combine(baseDir, "supabase.config.json"),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "supabase.config.local.json")),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "supabase.config.json"))
+            };
+
+            foreach (var path in candidatePaths)
+            {
+                if (File.Exists(path))
+                    return await ReadConfigFileAsync(path);
+            }
+
+            throw new FileNotFoundException(
+                $"Supabase config not found. Set environment variables `{UrlEnvVar}` and `{KeyEnvVar}`, or create `supabase.config.local.json` from `supabase.config.example.json` in the SmartMeal project.");
+        }
+
+        private static string? NormalizeOptional(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private static async Task<SupabaseConfig> ReadConfigFileAsync(string path)
+        {
+            var json = await File.ReadAllTextAsync(path);
+            return JsonSerializer.Deserialize<SupabaseConfig>(json)
+                ?? throw new InvalidOperationException($"Could not load Supabase config file: {path}");
+        }
+
         // Guards against a developer accidentally shipping the app with placeholder credentials.
         // Also catches the case where the file exists but the URL or key were left blank.
         private static void ValidateConfig(SupabaseConfig config)
@@ -120,11 +154,18 @@ namespace SmartMeal
             if (config.SupabaseUrl.Contains(UrlPlaceholder, StringComparison.OrdinalIgnoreCase)
                 || config.SupabaseAnonKey.Contains(KeyPlaceholder, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException(
-                    "Please replace placeholder values in supabase.config.json with real Supabase credentials.");
+                    "Please replace placeholder values with real Supabase credentials.");
+
+            if (!string.IsNullOrWhiteSpace(config.SupabaseEmailRedirectUrl)
+                && config.SupabaseEmailRedirectUrl.Contains(RedirectPlaceholder, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "Please replace the Supabase email redirect placeholder with a real URL, or remove the property.");
+            }
         }
 
         // A lightweight record just for deserialising supabase.config.json.
         // The property names here must exactly match the JSON keys in the file.
-        private record SupabaseConfig(string SupabaseUrl, string SupabaseAnonKey);
+        private record SupabaseConfig(string SupabaseUrl, string SupabaseAnonKey, string? SupabaseEmailRedirectUrl = null);
     }
 }

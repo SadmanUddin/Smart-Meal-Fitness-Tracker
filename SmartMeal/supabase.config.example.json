@@ -1,0 +1,5 @@
+{
+  "SupabaseUrl": "YOUR_SUPABASE_PROJECT_URL",
+  "SupabaseAnonKey": "YOUR_SUPABASE_ANON_KEY",
+  "SupabaseEmailRedirectUrl": "YOUR_SUPABASE_EMAIL_REDIRECT_URL"
+}

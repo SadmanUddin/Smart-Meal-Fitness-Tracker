@@ -3,6 +3,7 @@ bin/
 obj/
 *.user
 supabase.config.json
+supabase.config.local.json
 *.suo
 *.cache
 *.pdb

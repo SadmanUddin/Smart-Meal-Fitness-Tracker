@@ -18,10 +18,12 @@ namespace SmartMeal.core.Services
         // The Supabase SDK client — used for both auth operations (SignUp, SignIn, SignOut)
         // and for querying the users table to load the profile after login.
         private readonly Supabase.Client _client;
+        private readonly string? _emailRedirectUrl;
 
-        public AuthService(Supabase.Client client)
+        public AuthService(Supabase.Client client, string? emailRedirectUrl = null)
         {
             _client = client;
+            _emailRedirectUrl = string.IsNullOrWhiteSpace(emailRedirectUrl) ? null : emailRedirectUrl.Trim();
         }
 
         // The full profile of the currently signed-in user, loaded from the public.users table.
@@ -71,6 +73,8 @@ namespace SmartMeal.core.Services
                         ["full_name"] = cleanedName
                     }
                 };
+                if (!string.IsNullOrWhiteSpace(_emailRedirectUrl))
+                    signUpOptions.RedirectTo = _emailRedirectUrl;
 
                 // Ask Supabase Auth to create the account.
                 // With email confirmation enabled, this usually creates the auth user first
