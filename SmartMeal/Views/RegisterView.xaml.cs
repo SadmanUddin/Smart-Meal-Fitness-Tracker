@@ -36,48 +36,27 @@ namespace SmartMeal.Views
         // A MessageBox always appears — either a success message or an error explaining what went wrong.
         public async void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
-            // Parse optional numeric fields.
-            // Blank is allowed (null), but non-blank invalid input should fail fast with a clear message.
-            var ageText = AgeTextBox.Text.Trim();
-            int? age = null;
-            if (!string.IsNullOrWhiteSpace(ageText))
+            if (!TryParseOptionalInt(AgeTextBox.Text, out var age))
             {
-                if (!int.TryParse(ageText, out var parsedAge))
-                {
-                    MessageBox.Show("Please enter a valid age.");
-                    return;
-                }
-                age = parsedAge;
+                MessageBox.Show("Please enter a valid age.");
+                return;
             }
 
-            var heightText = HeightTextBox.Text.Trim();
-            decimal? heightCm = null;
-            if (!string.IsNullOrWhiteSpace(heightText))
+            if (!TryParseOptionalDecimal(HeightTextBox.Text, out var heightCm))
             {
-                if (!decimal.TryParse(heightText, out var parsedHeight))
-                {
-                    MessageBox.Show("Please enter a valid height in cm.");
-                    return;
-                }
-                heightCm = parsedHeight;
+                MessageBox.Show("Please enter a valid height in cm.");
+                return;
             }
 
-            var weightText = WeightTextBox.Text.Trim();
-            decimal? weightKg = null;
-            if (!string.IsNullOrWhiteSpace(weightText))
+            if (!TryParseOptionalDecimal(WeightTextBox.Text, out var weightKg))
             {
-                if (!decimal.TryParse(weightText, out var parsedWeight))
-                {
-                    MessageBox.Show("Please enter a valid weight in kg.");
-                    return;
-                }
-                weightKg = parsedWeight;
+                MessageBox.Show("Please enter a valid weight in kg.");
+                return;
             }
 
             // Read the gender Tag from the selected ComboBoxItem.
             // ComboBoxItem.Tag stores the lowercase DB value ("male", "female", "other", or "").
-            var genderTag = (GenderComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-            string? gender = string.IsNullOrEmpty(genderTag) ? null : genderTag;
+            var gender = GetSelectedGenderTag();
 
             var result = await _authService.RegisterAsync(
                 FullNameTextBox.Text,
@@ -103,6 +82,63 @@ namespace SmartMeal.Views
         public void LoginText_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             ((MainWindow)Application.Current.MainWindow).Navigate(new LoginView());
+        }
+
+        private string GetSelectedGenderTag()
+        {
+            if (GenderComboBox.SelectedItem is not ComboBoxItem selectedItem)
+                return string.Empty;
+
+            if (selectedItem.Tag == null)
+                return string.Empty;
+
+            var tagText = selectedItem.Tag.ToString();
+            if (string.IsNullOrEmpty(tagText))
+                return string.Empty;
+
+            return tagText;
+        }
+
+        // Optional numeric field parser:
+        // - blank text => null (valid)
+        // - valid number => parsed value
+        // - anything else => invalid
+        private static bool TryParseOptionalInt(string text, out int? value)
+        {
+            var cleaned = text.Trim();
+            if (string.IsNullOrWhiteSpace(cleaned))
+            {
+                value = null;
+                return true;
+            }
+
+            if (int.TryParse(cleaned, out var parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            value = null;
+            return false;
+        }
+
+        private static bool TryParseOptionalDecimal(string text, out decimal? value)
+        {
+            var cleaned = text.Trim();
+            if (string.IsNullOrWhiteSpace(cleaned))
+            {
+                value = null;
+                return true;
+            }
+
+            if (decimal.TryParse(cleaned, out var parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            value = null;
+            return false;
         }
     }
 }

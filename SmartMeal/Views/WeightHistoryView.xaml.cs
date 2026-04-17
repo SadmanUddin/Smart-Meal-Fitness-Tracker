@@ -59,8 +59,8 @@ namespace SmartMeal.Views
         // them here to get oldest-first, which is the correct direction for a time-series graph.
         private async Task LoadWeightLogsAsync()
         {
-            var userId = _authService.CurrentUser?.Id;
-            if (string.IsNullOrWhiteSpace(userId)) return;
+            if (!TryGetCurrentUserId(out var userId))
+                return;
 
             try
             {
@@ -118,8 +118,7 @@ namespace SmartMeal.Views
                 return;
             }
 
-            var userId = _authService.CurrentUser?.Id;
-            if (string.IsNullOrWhiteSpace(userId))
+            if (!TryGetCurrentUserId(out var userId))
             {
                 MessageBox.Show("No user logged in.");
                 return;
@@ -128,7 +127,10 @@ namespace SmartMeal.Views
             try
             {
                 var notes = NotesTextBox.Text.Trim();
-                await _weightLogService.AddWeightLogAsync(userId, weight, string.IsNullOrEmpty(notes) ? null : notes);
+                if (string.IsNullOrEmpty(notes))
+                    await _weightLogService.AddWeightLogAsync(userId, weight, null);
+                else
+                    await _weightLogService.AddWeightLogAsync(userId, weight, notes);
                 WeightInputTextBox.Clear();
                 NotesTextBox.Clear();
                 await LoadWeightLogsAsync(); // reload and redraw
@@ -285,9 +287,15 @@ namespace SmartMeal.Views
             var usedX = new List<double>();
             for (int i = 0; i < xLabelTarget; i++)
             {
-                int idx = logs.Count == 1
-                    ? 0
-                    : (int)Math.Round((double)i / (xLabelTarget - 1) * (logs.Count - 1));
+                int idx;
+                if (logs.Count == 1)
+                {
+                    idx = 0;
+                }
+                else
+                {
+                    idx = (int)Math.Round((double)i / (xLabelTarget - 1) * (logs.Count - 1));
+                }
                 idx = Math.Clamp(idx, 0, logs.Count - 1);
 
                 double x = ToX(logs[idx].LoggedAt);
@@ -388,6 +396,21 @@ namespace SmartMeal.Views
                 "Coming Soon",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+
+        private bool TryGetCurrentUserId(out string userId)
+        {
+            userId = string.Empty;
+
+            var currentUser = _authService.CurrentUser;
+            if (currentUser == null)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(currentUser.Id))
+                return false;
+
+            userId = currentUser.Id;
+            return true;
         }
     }
 }

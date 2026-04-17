@@ -35,8 +35,11 @@ namespace SmartMeal.Views
         {
             InitializeComponent();
 
-            _mainWindow = Application.Current.MainWindow as MainWindow
-                ?? throw new InvalidOperationException("Main window is not available.");
+            var mainWindow = Application.Current.MainWindow as MainWindow;
+            if (mainWindow == null)
+                throw new InvalidOperationException("Main window is not available.");
+
+            _mainWindow = mainWindow;
             _mealService = _mainWindow.MealService;
             _foodService = _mainWindow.FoodService;
             _authService = _mainWindow.AuthService;
@@ -106,8 +109,7 @@ namespace SmartMeal.Views
                 return;
             }
 
-            var userId = _authService.CurrentUser?.Id;
-            if (userId == null)
+            if (!TryGetCurrentUserId(out var userId))
             {
                 // Session expired (CurrentUser was cleared) — send back to login.
                 MessageBox.Show("Session expired. Please log in again.");
@@ -170,6 +172,21 @@ namespace SmartMeal.Views
                 "Coming Soon",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+
+        private bool TryGetCurrentUserId(out string userId)
+        {
+            userId = string.Empty;
+
+            var currentUser = _authService.CurrentUser;
+            if (currentUser == null)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(currentUser.Id))
+                return false;
+
+            userId = currentUser.Id;
+            return true;
         }
     }
 }

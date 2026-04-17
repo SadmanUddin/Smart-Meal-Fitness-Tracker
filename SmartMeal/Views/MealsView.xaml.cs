@@ -58,8 +58,7 @@ namespace SmartMeal.Views
         // depends on the other, which halves the wait time for those two queries.
         private async Task LoadMealsAsync()
         {
-            var userId = _authService.CurrentUser?.Id;
-            if (string.IsNullOrWhiteSpace(userId))
+            if (!TryGetCurrentUserId(out var userId))
             {
                 MessageBox.Show("No user logged in.");
                 return;
@@ -85,13 +84,9 @@ namespace SmartMeal.Views
                 var rows = logs.Select(log => new MealViewRow
                 {
                     MealLogId = log.MealLogId,
-                    FoodName = foodNameById.TryGetValue(log.FoodId, out var foodName)
-                        ? foodName
-                        : $"Food ID {log.FoodId}",
+                    FoodName = ResolveFoodName(foodNameById, log.FoodId),
                     Grams = log.Grams,
-                    MealTypeName = mealTypeNameById.TryGetValue(log.MealTypeId, out var mealTypeName)
-                        ? mealTypeName
-                        : $"Type {log.MealTypeId}",
+                    MealTypeName = ResolveMealTypeName(mealTypeNameById, log.MealTypeId),
                     LogDate = log.LogDate
                 }).ToList();
 
@@ -185,6 +180,37 @@ namespace SmartMeal.Views
             public decimal Grams { get; set; }
             public string MealTypeName { get; set; } = string.Empty;
             public string LogDate { get; set; } = string.Empty; // "yyyy-MM-dd" string from DB
+        }
+
+        private bool TryGetCurrentUserId(out string userId)
+        {
+            userId = string.Empty;
+
+            var currentUser = _authService.CurrentUser;
+            if (currentUser == null)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(currentUser.Id))
+                return false;
+
+            userId = currentUser.Id;
+            return true;
+        }
+
+        private static string ResolveFoodName(Dictionary<long, string> foodNameById, long foodId)
+        {
+            if (foodNameById.TryGetValue(foodId, out var foodName))
+                return foodName;
+
+            return $"Food ID {foodId}";
+        }
+
+        private static string ResolveMealTypeName(Dictionary<short, string> mealTypeNameById, short mealTypeId)
+        {
+            if (mealTypeNameById.TryGetValue(mealTypeId, out var mealTypeName))
+                return mealTypeName;
+
+            return $"Type {mealTypeId}";
         }
     }
 }

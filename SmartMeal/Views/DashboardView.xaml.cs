@@ -35,8 +35,11 @@ namespace SmartMeal.Views
 
             // Cast is safe because this UserControl is always hosted inside MainWindow.
             // The null-coalescing throw gives a clear error instead of a silent NPE later.
-            _mainWindow = Application.Current.MainWindow as MainWindow
-                ?? throw new InvalidOperationException("Main window is not available.");
+            var mainWindow = Application.Current.MainWindow as MainWindow;
+            if (mainWindow == null)
+                throw new InvalidOperationException("Main window is not available.");
+
+            _mainWindow = mainWindow;
             _mealService = _mainWindow.MealService;
             _foodService = _mainWindow.FoodService;
             _authService = _mainWindow.AuthService;
@@ -78,12 +81,10 @@ namespace SmartMeal.Views
         //   4. goals table (Supabase)      → this user's daily calorie goal
         private async Task LoadDashboardAsync()
         {
-            var userId = _authService.CurrentUser?.Id;
-
             // Guard: if no user is logged in, zero out every stat and return early.
             // This shouldn't happen in normal flow — LoginView always sets CurrentUser —
             // but it's a safe fallback to avoid showing stale or garbage data.
-            if (string.IsNullOrWhiteSpace(userId))
+            if (!TryGetCurrentUserId(out var userId))
             {
                 MealsCountBlock.Text = "0";
                 CaloriesConsumedBlock.Text = "0";
@@ -114,9 +115,11 @@ namespace SmartMeal.Views
                 var latestLog = logs[^1];
                 var foods = await _foodService.GetPublicFoodsAsync();
                 var foodNameById = foods.ToDictionary(f => f.FoodId, f => f.Name);
-                var latestFoodLabel = foodNameById.TryGetValue(latestLog.FoodId, out var foodName)
-                    ? foodName
-                    : $"Food ID {latestLog.FoodId}";
+                string latestFoodLabel;
+                if (foodNameById.TryGetValue(latestLog.FoodId, out var foodName))
+                    latestFoodLabel = foodName;
+                else
+                    latestFoodLabel = $"Food ID {latestLog.FoodId}";
 
                 RecentMealsTextBlock.Text = $"{latestFoodLabel} — {latestLog.Grams}g";
             }
@@ -149,7 +152,9 @@ namespace SmartMeal.Views
             // Each user has at most one row in the goals table.
             // If the user has never set a goal, GetGoalAsync returns null and we default to 0.
             var goal = await _goalService.GetGoalAsync(userId);
-            var dailyGoal = goal?.CalorieGoal ?? 0m;
+            decimal dailyGoal = 0m;
+            if (goal != null && goal.CalorieGoal.HasValue)
+                dailyGoal = goal.CalorieGoal.Value;
             CaloriesGoalBlock.Text = Math.Round(dailyGoal).ToString();
 
             // Balance = goal − consumed + burned
@@ -228,6 +233,21 @@ namespace SmartMeal.Views
                 "Coming Soon",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+        }
+
+        private bool TryGetCurrentUserId(out string userId)
+        {
+            userId = string.Empty;
+
+            var currentUser = _authService.CurrentUser;
+            if (currentUser == null)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(currentUser.Id))
+                return false;
+
+            userId = currentUser.Id;
+            return true;
         }
     }
 }

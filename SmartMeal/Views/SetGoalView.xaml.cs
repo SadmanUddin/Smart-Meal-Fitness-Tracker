@@ -44,8 +44,7 @@ namespace SmartMeal.Views
                 return;
             }
 
-            var userId = _authService.CurrentUser?.Id;
-            if (string.IsNullOrWhiteSpace(userId))
+            if (!TryGetCurrentUserId(out var userId))
             {
                 // Defensive check — shouldn't happen in normal flow since the user must
                 // be logged in to reach this view.
@@ -92,6 +91,21 @@ namespace SmartMeal.Views
         private void Activities_Click(object sender, RoutedEventArgs e)
         {
             _mainWindow.Navigate(new AddActivityView());
+        }
+
+        private bool TryGetCurrentUserId(out string userId)
+        {
+            userId = string.Empty;
+
+            var currentUser = _authService.CurrentUser;
+            if (currentUser == null)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(currentUser.Id))
+                return false;
+
+            userId = currentUser.Id;
+            return true;
         }
     }
 }
