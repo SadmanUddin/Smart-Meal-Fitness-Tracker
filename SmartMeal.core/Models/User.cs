@@ -57,5 +57,11 @@ namespace SmartMeal.core.Models
         // when inserting so the in-memory object has a valid timestamp immediately.
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
+
+        // Set to true by an admin to prevent the user from signing in.
+        // Defaults to false (DB DEFAULT false). Read at login — banned users are
+        // shown an error and their session is immediately invalidated.
+        [Column("is_banned")]
+        public bool IsBanned { get; set; }
     }
 }

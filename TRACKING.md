@@ -2,7 +2,7 @@
 
 > **Purpose:** This file is maintained after every significant change to give any developer a clear, up-to-date picture of what the app does, how it is structured, what has been done, and what still needs to be done.
 >
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-17 (Session 5)
 
 ---
 
@@ -64,7 +64,9 @@ SmartMealSolution/
 │   │   ├── AddMealView.xaml/.cs
 │   │   ├── AddActivityView.xaml/.cs
 │   │   ├── SetGoalView.xaml/.cs
-│   │   └── MealsView.xaml/.cs
+│   │   ├── MealsView.xaml/.cs
+│   │   ├── WeightHistoryView.xaml/.cs
+│   │   └── AdminDashboardView.xaml/.cs  ← Admin only: user table + ban/unban
 │   └── supabase.config.json    ← Credentials (gitignored — never commit)
 │
 ├── SmartMeal.core/             ← Business logic layer
@@ -82,7 +84,8 @@ SmartMealSolution/
 │       ├── FoodService.cs
 │       ├── GoalService.cs
 │       ├── WeightLogService.cs
-│       └── ActService.cs
+│       ├── ActService.cs
+│       └── AdminService.cs      ← Admin-only DB operations (ban/unban, all-users read)
 │
 ├── SmartMeal.Data/             ← Data access layer
 │   ├── Context/
@@ -111,6 +114,7 @@ Hosted on Supabase (PostgreSQL). All tables live in the `public` schema.
 | weight_kg | numeric(5,2) | Nullable |
 | gender | text | Nullable, constrained to `male/female/other` |
 | created_at | timestamptz | Default `now()` |
+| is_banned | boolean | Default `false`. Set by admin to block login. |
 
 ### `food_categories`
 | Column | Type | Notes |
@@ -185,13 +189,13 @@ Seeded with 44 public food items.
 
 | C# Model | DB Table | Status |
 |---|---|---|
-| `User.cs` | `users` | ✅ Fully mapped |
-| `FoodItem.cs` | `food_items` | ⚠️ Missing `created_by_user_id` column (read-only use unaffected) |
-| `MealLog` (Meal.cs) | `meal_logs` | ✅ Fully mapped |
-| `MealType.cs` | `meal_types` | ✅ Fully mapped |
-| `Goal.cs` | `goals` | ✅ Fully mapped and in active use |
-| `WeightLog.cs` | `weight_logs` | ✅ Fully mapped — no UI yet |
-| `Activity.cs` | `activities` | ✅ Fully mapped and persisted via Supabase |
+| `User.cs` | `users` | Fully mapped |
+| `FoodItem.cs` | `food_items` | Missing `created_by_user_id` column (read-only use unaffected) |
+| `MealLog` (Meal.cs) | `meal_logs` | Fully mapped |
+| `MealType.cs` | `meal_types` | Fully mapped |
+| `Goal.cs` | `goals` | Fully mapped and in active use |
+| `WeightLog.cs` | `weight_logs` | Fully mapped — WeightHistoryView (Session 4) |
+| `Activity.cs` | `activities` | Fully mapped and persisted via Supabase |
 | *(none)* | `food_categories` | No C# model. `FoodItem.FoodCategoryId` stores the FK but category name is never fetched. |
 
 ---
@@ -230,7 +234,14 @@ Seeded with 44 public food items.
 - `GetLatestWeightLogAsync(userId)` — returns the newest log or `null`
 - `UpdateWeightLogAsync(weightLogId, weightKg, notes)` — updates weight/notes by primary key
 - `DeleteWeightLogAsync(weightLogId)` — deletes a single `weight_logs` row by primary key
-- **Backed by Supabase** — service is ready, UI still not implemented
+- **Backed by Supabase** — used by `WeightHistoryView`
+
+### `AdminService` — `SmartMeal.core/Services/AdminService.cs`
+- `GetAllUsersAsync()` — returns all rows from `public.users` ordered newest-first (requires admin RLS)
+- `SetBannedAsync(userId, bool)` — sets `is_banned` on a user row; fetch-then-update pattern (requires admin RLS)
+- `GetTotalMealLogsCountAsync()` — count of all `meal_logs` rows (requires admin SELECT policy)
+- `GetTotalActivitiesCountAsync()` — count of all `activities` rows (requires admin SELECT policy)
+- **Admin-only** — returns empty/throws for non-admin JWTs; never exposed to regular users
 
 ---
 
@@ -564,7 +575,8 @@ User fills form → LoginButton_Click
     → _client.Auth.SignIn(email, password)          [Supabase Auth]
     → _client.From<User>().Where(id).Single()       [public.users SELECT]
     → Sets AuthService.CurrentUser
-  → Navigate to DashboardView
+  → Ban check: if CurrentUser.IsBanned → SignOutAsync() + error message
+  → Role check: if role == "admin" → AdminDashboardView, else → DashboardView
 ```
 
 ### Add Meal
@@ -629,7 +641,7 @@ Understanding which data survives a restart is critical for knowing what feature
 | Food database | Yes (seeded) | Yes | `food_items`, `food_categories` |
 | Meal types | Yes (seeded) | Yes | `meal_types` |
 | Activities | Yes | Yes | `activities` |
-| Weight logs | Yes (service ready) | Yes | `weight_logs` — no UI |
+| Weight logs | Yes | Yes | `weight_logs` — WeightHistoryView (log + graph) |
 | Protein/carbs/fat goals | Yes (columns exist) | Yes | `goals` — no UI |
 | Target weight goal | Yes (column exists) | Yes | `goals` — no UI |
 | User profile (age, height, gender) | Yes (columns exist) | Yes | `users` — no UI to edit after registration |
@@ -770,10 +782,10 @@ Full cross-reference of the Supabase DB schema against C# models and services. I
 
 Confirmed the full configuration chain is intact and ready to use:
 - `supabase.config.json` — live credentials present
-- `.gitignore` — file is excluded from version control ✅
-- `SmartMeal.csproj` — `CopyToOutputDirectory: PreserveNewest` ✅
-- `MainWindow.InitializeAsync()` — reads, validates, and connects ✅
-- All 4 services initialized with the Supabase client ✅
+- `.gitignore` — file is excluded from version control
+- `SmartMeal.csproj` — `CopyToOutputDirectory: PreserveNewest`
+- `MainWindow.InitializeAsync()` — reads, validates, and connects
+- All 4 services initialized with the Supabase client
 
 ---
 
@@ -811,20 +823,22 @@ Confirmed the full configuration chain is intact and ready to use:
 ### UI/UX
 | Issue | File(s) | Details |
 |---|---|---|
-| ~~MealsView shows raw FoodId number~~ | ~~MealsView.xaml~~ | ✅ Fixed in Session 3 — `MealViewRow` projection resolves names |
-| ~~MealsView shows raw MealTypeId number~~ | ~~MealsView.xaml~~ | ✅ Fixed in Session 3 — `MealViewRow` projection resolves names |
-| ~~Dashboard recent meal shows raw ID~~ | ~~DashboardView.xaml.cs~~ | ✅ Fixed in Session 3 — food name resolved via `GetPublicFoodsAsync()` lookup |
+| ~~MealsView shows raw FoodId number~~ | ~~MealsView.xaml~~ | Fixed in Session 3 — `MealViewRow` projection resolves names |
+| ~~MealsView shows raw MealTypeId number~~ | ~~MealsView.xaml~~ | Fixed in Session 3 — `MealViewRow` projection resolves names |
+| ~~Dashboard recent meal shows raw ID~~ | ~~DashboardView.xaml.cs~~ | Fixed in Session 3 — food name resolved via `GetPublicFoodsAsync()` lookup |
 | Sidebar navigation polish still incomplete | `AddMealView`, `SetGoalView`, `AddActivityView`, `MealsView`, `DashboardView` | Dashboard/Meals/Activities/History navigation works. Profile remains a "coming soon" stub. |
 
 ### Missing Features
 | Feature | Status | Notes |
 |---|---|---|
 | Activity history UI | Partial | Activities are persisted, but there is no dedicated full history/manage screen (only add + dashboard summary/recent). |
-| ~~Weight logging UI~~ | ~~Missing~~ | ✅ Implemented in Session 4 — `WeightHistoryView` with line graph and log form. |
+| ~~Weight logging UI~~ | ~~Missing~~ | Implemented in Session 4 — `WeightHistoryView` with line graph and log form. |
 | Full goal editing | Partial | Only `calorie_goal` is collected. `protein_goal`, `carbs_goal`, `fat_goal`, `target_weight_kg` columns in `goals` table are unused. |
 | User profile editing (post-registration) | Partial | Age, height, weight, gender are now collected at registration. No screen to edit them after the fact. |
 | Calorie detail UX | Partial | Dashboard shows total calories consumed, but no per-meal calorie breakdown. |
 | Food category display | Missing | No `FoodCategory` C# model. Category names not shown anywhere. |
+| ~~Admin / user management~~ | ~~Missing~~ | Implemented in Session 5 — `AdminDashboardView` with user table, ban/unban, stat cards, and role-based login routing. |
+| Admin role promotion UI | Missing | Role is set directly in Supabase SQL editor. No in-app UI to promote/demote admins. |
 
 ### Technical Debt
 | Issue | File(s) | Details |
@@ -955,9 +969,61 @@ Changed `History_Click` from a "Coming Soon" MessageBox to `_mainWindow.Navigate
 
 #### E. Known issues updated
 
-- Registration profile fields: ✅ now collected at registration
-- Weight history: ✅ now fully implemented
+- Registration profile fields: now collected at registration
+- Weight history: now fully implemented
 - Profile editing (after registration): still not implemented
+
+---
+
+### Session 5 — 2026-04-17
+**Who:** Developer
+**Branch:** `main`
+
+#### A. Admin role system implemented
+
+The full admin feature was built end-to-end across the DB, service, and UI layers.
+
+**Database (run manually in Supabase SQL Editor):**
+- `is_banned boolean NOT NULL DEFAULT false` column added to `public.users`
+- `database/rls_admin_banned_policies.sql` created — reproducible migration covering:
+  - `is_current_user_admin()` and `is_current_user_banned()` helper functions (SECURITY DEFINER, no RLS recursion)
+  - Admin SELECT + UPDATE policies on `public.users`
+  - Self-escalation prevention: users can only INSERT with `role='user'` and `is_banned=false`
+  - Restrictive "block banned users" policies on `meal_logs`, `goals`, `weight_logs`, `activities`
+  - Admin SELECT policies on all four user-data tables (for overview counts)
+
+**C# — model:**
+- `SmartMeal.core/Models/User.cs` — `IsBanned` property added (`[Column("is_banned")]`)
+
+**C# — new service:**
+- `SmartMeal.core/Services/AdminService.cs` — admin-only DB operations:
+  - `GetAllUsersAsync()` — reads all `users` rows (RLS-gated to admin)
+  - `SetBannedAsync(userId, banned)` — fetch-then-update pattern to flip `is_banned`
+  - `GetTotalMealLogsCountAsync()` / `GetTotalActivitiesCountAsync()` — cross-user counts
+
+**C# — MainWindow:**
+- `AdminService` property added, initialized in `InitializeAsync()` alongside other services
+
+**C# — LoginView:**
+- After successful `LoginAsync`, two new checks run before navigation:
+  1. **Ban gate** — if `CurrentUser.IsBanned`, calls `SignOutAsync()` and shows "Account suspended" error
+  2. **Role routing** — `role == "admin"` → `AdminDashboardView`; otherwise → `DashboardView`
+
+**New view — `AdminDashboardView.xaml` / `.xaml.cs`:**
+- Sidebar: "Users" (current page, blue) + "Log Out" button (red text)
+- Stat cards: Total Users / Active Users (green) / Banned Users (red)
+- DataGrid with columns: Name, Email, Role, Joined, Status, Action
+- Action button per row: "Ban" (red) or "Unban" (green); grey "—" for the admin's own row
+- Confirmation dialog before each ban/unban action
+- Grid reloads and stat cards update after every action
+- Secondary role guard in `LoadUsersAsync()` — redirects to login if somehow not admin
+
+#### B. To set the first admin account
+Run directly in Supabase SQL Editor:
+```sql
+UPDATE public.users SET role = 'admin' WHERE email = 'your@email.com';
+```
+No in-app UI for role promotion (by design — admin access is granted out-of-band).
 
 ---
 

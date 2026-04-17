@@ -33,8 +33,11 @@ namespace SmartMeal
         public FoodService FoodService { get; private set; } = null!;
         public GoalService GoalService { get; private set; } = null!;
         public WeightLogService WeightLogService { get; private set; } = null!;
-
         public ActService ActService { get; private set; } = null!;
+        // Admin-only service. Regular users don't hold a reference to this,
+        // but it lives here so AdminDashboardView can pull it out the same way
+        // all other views pull their services.
+        public AdminService AdminService { get; private set; } = null!;
 
         public MainWindow()
         {
@@ -89,6 +92,7 @@ namespace SmartMeal
             GoalService = new GoalService(provider.Client);
             WeightLogService = new WeightLogService(provider.Client);
             ActService = new ActService(provider.Client);
+            AdminService = new AdminService(provider.Client);
 
             // Show the registration screen first. New users register, existing users
             // navigate to login from the link at the bottom of the register form.

@@ -1,10 +1,11 @@
 // LoginView is the sign-in screen.
 // The user enters their email and password, clicks Login, and if the credentials are correct
-// they are taken to the Dashboard. If not, an error message is shown and they stay here.
+// they are taken to the appropriate view — AdminDashboardView for admins, DashboardView for
+// regular users. Banned users are shown an error and their session is immediately ended.
 //
 // This view is shown:
 //   - When the app first starts (after RegisterView)
-//   - After the user logs out from the Dashboard
+//   - After the user logs out from any view
 
 using System.Windows;
 using System.Windows.Controls;
@@ -27,22 +28,64 @@ namespace SmartMeal.Views
 
         // Fires when the user clicks the Login button.
         // Sends the email and password to Supabase Auth for verification.
-        // On success: navigates to the Dashboard so the user can start using the app.
-        // On failure: shows the error message (e.g. "Invalid login credentials") and stays here.
+        //
+        // After a successful sign-in, three things happen before navigating:
+        //   1. Ban check — banned users are rejected immediately and their session is ended.
+        //   2. Role check — admins go to AdminDashboardView; regular users go to DashboardView.
         public async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            var result = await _authService.LoginAsync(EmailTextBox.Text, PasswordBox.Password);
-
-            // If login failed, show why and stop — the user needs to correct their input.
-            if (!result.Success)
+            try
             {
-                MessageBox.Show(result.Message);
-                return;
-            }
+                var result = await _authService.LoginAsync(EmailTextBox.Text, PasswordBox.Password);
 
-            // Login succeeded — AuthService.CurrentUser is now set with the user's profile.
-            // Navigate to the Dashboard, which will load and display the user's data.
-            ((MainWindow)Application.Current.MainWindow).Navigate(new DashboardView());
+                // If login failed, show why and stop — the user needs to correct their input.
+                if (!result.Success)
+                {
+                    MessageBox.Show(result.Message);
+                    return;
+                }
+
+                var mainWindow = (MainWindow)Application.Current.MainWindow;
+                var currentUser = _authService.CurrentUser;
+
+                // Ban check — happens before role routing so banned admins are also blocked.
+                // SignOutAsync clears the session so the user cannot stay signed in.
+                // Wrapped in its own try/catch: a network failure during sign-out must not
+                // leave the user stuck on a blank screen — we still show the suspend message.
+                if (currentUser?.IsBanned == true)
+                {
+                    try
+                    {
+                        await _authService.SignOutAsync();
+                    }
+                    catch
+                    {
+                        // Session invalidation failed (network/server issue).
+                        // The user is still blocked in the app; the session will expire naturally.
+                    }
+
+                    MessageBox.Show(
+                        "Your account has been suspended. Please contact support.",
+                        "Account Suspended",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Route to the appropriate home screen based on the user's role.
+                if (currentUser?.Role == "admin")
+                    mainWindow.Navigate(new AdminDashboardView());
+                else
+                    mainWindow.Navigate(new DashboardView());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"An unexpected error occurred during login: {ex.Message}",
+                    "Login Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         // Fires when the user clicks the "Don't have an account? Register" link.
