@@ -1,3 +1,18 @@
+// MealsView shows the user's full history of logged meals — not just today's.
+//
+// It fetches all meal_log rows for the current user from Supabase, then enriches them
+// by resolving the food ID and meal type ID to human-readable names using lookup
+// dictionaries built from the foods and meal_types tables.
+//
+// The DataGrid is bound to a list of MealViewRow objects — a small private class
+// defined at the bottom of this file that holds display-ready strings rather than
+// raw integer IDs. This keeps the XAML bindings simple and the grid readable.
+//
+// Rows can be deleted individually. Deletion removes the row from the DB and
+// immediately refreshes the grid.
+//
+// Navigation buttons: Dashboard, Add Meal, Activities, History, Profile (coming soon).
+
 using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.core.Services;
@@ -8,7 +23,7 @@ namespace SmartMeal.Views
     {
         private readonly MainWindow _mainWindow;
         private readonly MealService _mealService;
-        private readonly FoodService _foodService;
+        private readonly FoodService _foodService; // used to resolve food names and meal type names
         private readonly AuthService _authService;
 
         public MealsView()
@@ -18,15 +33,29 @@ namespace SmartMeal.Views
             _mealService = _mainWindow.MealService;
             _foodService = _mainWindow.FoodService;
             _authService = _mainWindow.AuthService;
+
+            // Defer the async DB load to the Loaded event — can't await in a constructor.
             Loaded += MealsView_Loaded;
         }
 
+        // Fires once when the view is rendered. Unsubscribes immediately to prevent
+        // accidental double-loading if the control is ever removed and re-added.
         private async void MealsView_Loaded(object sender, RoutedEventArgs e)
         {
             Loaded -= MealsView_Loaded;
             await LoadMealsAsync();
         }
 
+        // Fetches all meal logs for the current user, resolves IDs to names,
+        // and binds the result to the DataGrid.
+        //
+        // Three DB calls are made:
+        //   1. GetAllLogsAsync      — all meal_log rows for this user (any date)
+        //   2. GetPublicFoodsAsync  — all food items (to resolve FoodId → Name)
+        //   3. GetMealTypesAsync    — all meal types (to resolve MealTypeId → Name)
+        //
+        // Calls 2 and 3 are fired in parallel with Task.WhenAll because neither
+        // depends on the other, which halves the wait time for those two queries.
         private async Task LoadMealsAsync()
         {
             var userId = _authService.CurrentUser?.Id;
@@ -40,13 +69,19 @@ namespace SmartMeal.Views
             {
                 var logs = await _mealService.GetAllLogsAsync(userId);
 
+                // Fetch the lookup tables in parallel to avoid sequential round-trips.
                 var foodsTask = _foodService.GetPublicFoodsAsync();
                 var mealTypesTask = _foodService.GetMealTypesAsync();
                 await Task.WhenAll(foodsTask, mealTypesTask);
 
+                // Build O(1) lookup dictionaries so the projection below doesn't
+                // do a linear search per row.
                 var foodNameById = foodsTask.Result.ToDictionary(f => f.FoodId, f => f.Name);
                 var mealTypeNameById = mealTypesTask.Result.ToDictionary(t => t.MealTypeId, t => t.Name);
 
+                // Project each raw MealLog into a MealViewRow with display-ready strings.
+                // If a food or meal type ID isn't found in the lookup (shouldn't happen with seeded data
+                // but is handled gracefully), we fall back to showing the raw ID.
                 var rows = logs.Select(log => new MealViewRow
                 {
                     MealLogId = log.MealLogId,
@@ -72,6 +107,11 @@ namespace SmartMeal.Views
             }
         }
 
+        // Fires when the user clicks the Delete button on a row.
+        //
+        // The Delete button in XAML has Tag="{Binding MealLogId}" so we can identify
+        // which row to delete without needing to track the selected row separately.
+        // MealLogId is a long (int64) — the auto-incrementing PK from the meal_logs table.
         private async void DeleteMeal_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is long mealLogId)
@@ -86,6 +126,7 @@ namespace SmartMeal.Views
                 {
                     try
                     {
+                        // Delete the row from the DB, then reload the grid to reflect the change.
                         await _mealService.DeleteMealLogAsync(mealLogId);
                         await LoadMealsAsync();
                     }
@@ -101,6 +142,7 @@ namespace SmartMeal.Views
             }
         }
 
+        // Sidebar navigation — consistent links across all views.
         private void Dashboard_Click(object sender, RoutedEventArgs e)
         {
             _mainWindow.Navigate(new DashboardView());
@@ -116,15 +158,13 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new AddActivityView());
         }
 
+        // Navigate to WeightHistoryView to see the weight graph and log a new weigh-in.
         private void History_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "Weight history view is not implemented yet.",
-                "Coming Soon",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _mainWindow.Navigate(new WeightHistoryView());
         }
 
+        // Placeholder — user profile editing not yet implemented.
         private void Profile_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show(
@@ -134,13 +174,17 @@ namespace SmartMeal.Views
                 MessageBoxImage.Information);
         }
 
+        // A flat, display-only record used as the DataGrid row model.
+        // We project from MealLog (which has raw integer IDs) into this type
+        // so the DataGrid columns can bind directly to human-readable strings
+        // without needing converters or multi-binding in XAML.
         private sealed class MealViewRow
         {
-            public long MealLogId { get; set; }
+            public long MealLogId { get; set; }       // PK — used by the Delete button's Tag binding
             public string FoodName { get; set; } = string.Empty;
             public decimal Grams { get; set; }
             public string MealTypeName { get; set; } = string.Empty;
-            public string LogDate { get; set; } = string.Empty;
+            public string LogDate { get; set; } = string.Empty; // "yyyy-MM-dd" string from DB
         }
     }
 }

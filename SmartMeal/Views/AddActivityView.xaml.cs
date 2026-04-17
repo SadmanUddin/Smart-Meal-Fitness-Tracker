@@ -109,14 +109,10 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new MealsView());
         }
 
-        // Placeholder — weight history view not yet implemented.
+        // Navigate to WeightHistoryView to see the weight graph and log a new weigh-in.
         private void History_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "Weight history view is not implemented yet.",
-                "Coming Soon",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _mainWindow.Navigate(new WeightHistoryView());
         }
 
         // Placeholder — user profile editing not yet implemented.

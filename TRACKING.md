@@ -2,7 +2,7 @@
 
 > **Purpose:** This file is maintained after every significant change to give any developer a clear, up-to-date picture of what the app does, how it is structured, what has been done, and what still needs to be done.
 >
-> **Last updated:** 2026-04-16
+> **Last updated:** 2026-04-17
 
 ---
 
@@ -658,7 +658,7 @@ Understanding which data survives a restart is critical for knowing what feature
 ---
 
 ### Session 1 — 2026-04-16
-**Who:** Developer (Claude Code assisted)
+**Who:** Developer
 **Branch:** `main`
 
 #### A. Pull & Merge — upstream `origin/main` (3 new commits)
@@ -778,7 +778,7 @@ Confirmed the full configuration chain is intact and ready to use:
 ---
 
 ### Session 2 — 2026-04-16
-**Who:** Developer (Codex assisted)
+**Who:** Developer
 **Branch:** `main`
 
 #### A. Activities moved to Supabase
@@ -811,19 +811,19 @@ Confirmed the full configuration chain is intact and ready to use:
 ### UI/UX
 | Issue | File(s) | Details |
 |---|---|---|
-| MealsView shows raw `FoodId` number | `MealsView.xaml` | Should show food name (e.g. "Chicken Breast"). Requires loading `food_items` and joining in the view or service. |
-| MealsView shows raw `MealTypeId` number | `MealsView.xaml` | Should show "Breakfast", "Lunch" etc. Requires loading `meal_types` and joining. |
-| Dashboard recent meal shows `"Food ID 3 — 150g"` | `DashboardView.xaml.cs` | Same root cause — food name not resolved. |
-| No sidebar navigation in several views | `AddMealView`, `SetGoalView`, `AddActivityView` | Sidebar buttons exist in XAML but have no `Click` handlers. Pressing them does nothing. |
+| ~~MealsView shows raw FoodId number~~ | ~~MealsView.xaml~~ | ✅ Fixed in Session 3 — `MealViewRow` projection resolves names |
+| ~~MealsView shows raw MealTypeId number~~ | ~~MealsView.xaml~~ | ✅ Fixed in Session 3 — `MealViewRow` projection resolves names |
+| ~~Dashboard recent meal shows raw ID~~ | ~~DashboardView.xaml.cs~~ | ✅ Fixed in Session 3 — food name resolved via `GetPublicFoodsAsync()` lookup |
+| Sidebar navigation polish still incomplete | `AddMealView`, `SetGoalView`, `AddActivityView`, `MealsView`, `DashboardView` | Dashboard/Meals/Activities/History navigation works. Profile remains a "coming soon" stub. |
 
 ### Missing Features
 | Feature | Status | Notes |
 |---|---|---|
 | Activity history UI | Partial | Activities are persisted, but there is no dedicated full history/manage screen (only add + dashboard summary/recent). |
-| Weight logging UI | Missing | `WeightLog` model and `weight_logs` table are ready; no view exists. |
+| ~~Weight logging UI~~ | ~~Missing~~ | ✅ Implemented in Session 4 — `WeightHistoryView` with line graph and log form. |
 | Full goal editing | Partial | Only `calorie_goal` is collected. `protein_goal`, `carbs_goal`, `fat_goal`, `target_weight_kg` columns in `goals` table are unused. |
-| User profile editing | Missing | `users` table has `age`, `height_cm`, `weight_kg`, `gender` columns but no UI to set them after registration. |
-| Calorie detail UX | Partial | Dashboard shows total calories consumed, but meal list/recent meal still show raw IDs and no per-meal calorie breakdown. |
+| User profile editing (post-registration) | Partial | Age, height, weight, gender are now collected at registration. No screen to edit them after the fact. |
+| Calorie detail UX | Partial | Dashboard shows total calories consumed, but no per-meal calorie breakdown. |
 | Food category display | Missing | No `FoodCategory` C# model. Category names not shown anywhere. |
 
 ### Technical Debt
@@ -834,6 +834,130 @@ Confirmed the full configuration chain is intact and ready to use:
 | Zero test coverage | `SmartUnit.Tests/` | Only a scaffolded empty `Test1()` method. No actual tests. |
 | No MVVM | All views | Views contain all business logic. Hard to unit test. Consider refactoring to MVVM + commands. |
 | No DI container | `MainWindow.xaml.cs` | Services manually instantiated. Consider `Microsoft.Extensions.DependencyInjection`. |
+
+---
+
+### Session 3 — 2026-04-17
+**Who:** Developer
+**Branch:** `main`
+
+#### A. Human-readable comments added to entire codebase
+
+Every C# file now has guiding comments written for a new developer — not just inline code notes, but top-of-file explanations covering what the class does, why design decisions were made, and how each method fits into the larger flow.
+
+Files commented:
+
+| File | What was explained |
+|---|---|
+| `SmartMeal.core/Models/User.cs` | `[PrimaryKey]` second param, optional profile fields |
+| `SmartMeal.core/Models/FoodItem.cs` | Per-100g nutrition convention, missing `created_by_user_id` |
+| `SmartMeal.core/Models/Meal.cs` (MealLog) | `LogDate` as string, PostgREST DATE format |
+| `SmartMeal.core/Models/MealType.cs` | Seeded lookup table, display_order |
+| `SmartMeal.core/Models/Goal.cs` | UNIQUE constraint on user_id, unused goal columns |
+| `SmartMeal.core/Models/WeightLog.cs` | Model + table exist, no UI yet |
+| `SmartMeal.core/Models/Activity.cs` | DB-backed, UserId type history |
+| `SmartMeal.core/Models/FitGoal.cs` | Marked DEPRECATED — superseded by `Goal.cs` |
+| `SmartMeal.core/Services/AuthService.cs` | Two-step registration, CurrentUser lifecycle, metadata parsing |
+| `SmartMeal.core/Services/MealService.cs` | All methods, upsert pattern, log_date as string |
+| `SmartMeal.core/Services/FoodService.cs` | Read-only service, what each query returns |
+| `SmartMeal.core/Services/GoalService.cs` | Upsert logic, why `.Get()` not `.Single()` |
+| `SmartMeal.core/Services/ActService.cs` | DB-backed, GetActivitiesByUserAsync |
+| `SmartMeal.Data/Context/SupabaseClientProvider.cs` | AutoRefreshToken, AutoConnectRealtime=false |
+| `SmartMeal/MainWindow.xaml.cs` | Startup sequence, config validation, navigation pattern |
+| `SmartMeal/Views/LoginView.xaml.cs` | Sign-in flow, success/failure handling |
+| `SmartMeal/Views/RegisterView.xaml.cs` | Two-step registration, redirect on success |
+| `SmartMeal/Views/DashboardView.xaml.cs` | Three data sources, balance formula, logout flow |
+| `SmartMeal/Views/AddMealView.xaml.cs` | Dropdown loading, validation, DB insert |
+| `SmartMeal/Views/AddActivityView.xaml.cs` | In-memory store note, validation, Activity fields |
+| `SmartMeal/Views/SetGoalView.xaml.cs` | Upsert pattern, one-row-per-user constraint |
+| `SmartMeal/Views/MealsView.xaml.cs` | ID-to-name resolution, `MealViewRow` projection, delete flow |
+
+#### B. `supabase.config.json` — EmailRedirectUrl fixed
+
+- `SupabaseEmailRedirectUrl` was set to `"https://oqkyfoaakdwxyggppijg.supabase.co"` (the project root URL).
+- This is incorrect for a desktop app — there is no web callback page.
+- Fixed to `""` in both `supabase.config.json` and `supabase.config.example.json`.
+- `AuthService` already handles empty/null correctly: `signUpOptions.RedirectTo` is skipped when the value is null, so Supabase uses its own built-in confirmation page.
+
+#### C. MealsView — ID-to-name resolution
+
+- `LoadMealsAsync` now fetches `food_items` and `meal_types` in parallel (`Task.WhenAll`).
+- Projects each `MealLog` into a `MealViewRow` (private sealed class) with resolved human-readable names.
+- DataGrid columns now show `FoodName` and `MealTypeName` instead of raw integer IDs.
+
+#### D. Dashboard — food name resolved in recent meal preview
+
+- `LoadDashboardAsync` now loads `food_items` after fetching today's logs.
+- Builds a `foodNameById` dictionary and resolves the latest log's `FoodId` to a display name.
+- Recent Meals panel now shows e.g. `"Chicken Breast — 150g"` instead of `"Food ID 3 — 150g"`.
+
+#### E. Sidebar navigation wired across all views
+
+- `AddMealView`, `AddActivityView`, and `SetGoalView` all now have working sidebar `Click` handlers.
+- Dashboard, Meals, and Activities links navigate correctly.
+- History and Profile remain "Coming Soon" stubs (backing code exists, UI not yet built).
+
+---
+
+### Session 4 — 2026-04-17
+**Who:** Developers
+**Branch:** `main`
+
+#### A. Registration form expanded with profile fields
+
+- `RegisterView.xaml` — redesigned with 2-column layout for compact display:
+  - Row 1: Full Name (full width)
+  - Row 2: Email (full width)
+  - Row 3: Password | Confirm Password (side-by-side)
+  - Row 4: Age | Gender (ComboBox: Prefer not to say / Male / Female / Other)
+  - Row 5: Height (cm) | Starting Weight (kg)
+  - All profile fields are optional — leaving them blank is valid.
+- `RegisterView.xaml.cs` — collects the new fields using `TryParse` for numerics (null if blank).
+- `AuthService.RegisterAsync` — updated signature:
+  ```
+  RegisterAsync(name, email, password, confirmPassword, age?, heightCm?, weightKg?, gender?)
+  ```
+  - Validates optional fields if provided (age range 1–120, positive height/weight, valid gender string).
+  - Stores all fields in Supabase Auth `user_metadata` at signup time so they survive the email-confirmation gap.
+  - On auto-confirmed signup: immediately writes the full profile to `users` table.
+  - On email-confirmation-required signup: fields are written to `users` at first login via `EnsureUserProfileExistsAsync`, which reads them back from `user_metadata`.
+
+#### B. Starting weight logged to `weight_logs` at registration
+
+- `EnsureUserProfileExistsAsync` now inserts an initial `weight_logs` row (`Notes = "Starting weight"`) when creating the `users` profile row, if a starting weight was provided.
+- This ensures the weight history chart always has at least one baseline data point for users who entered their weight at registration.
+
+#### C. `WeightHistoryView` — new view (weight graph + log weight form)
+
+**New files:**
+- `SmartMeal/Views/WeightHistoryView.xaml`
+- `SmartMeal/Views/WeightHistoryView.xaml.cs`
+
+**Features:**
+- **Latest Weight card** (top right): shows the most recent weight log value and date.
+- **Log Weight panel**: inline form with Weight (kg) + optional Notes fields and a "Log Weight" button. Inserts into `weight_logs` via `WeightLogService`.
+- **Line graph**: drawn using WPF's built-in `Canvas`, `Polyline`, `Ellipse`, and `Line` shapes — no external charting library needed. Features:
+  - Y-axis labels (weight in kg) with horizontal gridlines
+  - X-axis labels (dates, up to 7 evenly spaced)
+  - Blue fill polygon under the line for visual clarity
+  - Filled dot at each data point with the weight value above it
+  - Redraws automatically when the chart area is resized (`SizeChanged` event)
+- **Time filter buttons**: 7 Days | 30 Days | All Time (active button highlighted blue)
+- Sidebar navigation: Dashboard, Meals, Activities, History (current, no click), Profile (coming soon)
+
+#### D. History button wired to WeightHistoryView across all views
+
+Changed `History_Click` from a "Coming Soon" MessageBox to `_mainWindow.Navigate(new WeightHistoryView())` in:
+- `DashboardView.xaml.cs`
+- `AddMealView.xaml.cs`
+- `AddActivityView.xaml.cs`
+- `MealsView.xaml.cs`
+
+#### E. Known issues updated
+
+- Registration profile fields: ✅ now collected at registration
+- Weight history: ✅ now fully implemented
+- Profile editing (after registration): still not implemented
 
 ---
 

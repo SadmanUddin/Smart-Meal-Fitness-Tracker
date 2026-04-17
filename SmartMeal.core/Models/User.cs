@@ -35,20 +35,21 @@ namespace SmartMeal.core.Models
         [Column("role")]
         public string Role { get; set; } = "user";
 
-        // Optional profile fields — not collected at registration yet.
-        // These columns exist in the database and the model is ready for them,
-        // but there is no profile-editing UI in the app at this time.
+        // Optional profile fields — collected on the registration form.
+        // All four are optional; the user can leave them blank and update later.
+        // Age, HeightCm, and WeightKg are numeric (nullable).
+        // Gender must be "male", "female", or "other" (DB check constraint), or null.
         [Column("age")]
         public int? Age { get; set; }
 
         [Column("height_cm")]
         public decimal? HeightCm { get; set; }
 
+        // Snapshot of weight at registration time. Ongoing weight tracking uses
+        // the weight_logs table (see WeightLog.cs) — that is the authoritative history.
         [Column("weight_kg")]
         public decimal? WeightKg { get; set; }
 
-        // Must be "male", "female", or "other" — the DB has a check constraint.
-        // Nullable because we do not collect it during registration.
         [Column("gender")]
         public string? Gender { get; set; }
 

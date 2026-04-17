@@ -1,6 +1,11 @@
-// RegisterView is the account creation screen — the first thing a new user sees.
-// The user fills in their name, email, and password, then clicks Register.
+// RegisterView is the account creation screen.
+// The user fills in their name, email, password, and optional profile details
+// (age, gender, height, starting weight), then clicks Register.
 // On success they are redirected to LoginView to sign in with their new account.
+//
+// Profile fields are optional — the user can leave them blank and fill them in later.
+// If a starting weight is entered, it is saved to the weight_logs table as the
+// baseline entry that appears at the start of the weight history graph.
 //
 // Existing users can click the "Already have an account? Login" link to skip registration.
 
@@ -14,7 +19,8 @@ namespace SmartMeal.Views
     public partial class RegisterView : UserControl
     {
         // AuthService handles all the registration logic including input validation,
-        // creating the Supabase Auth account, and inserting the users table row.
+        // creating the Supabase Auth account, inserting the users table row,
+        // and logging the starting weight if provided.
         private readonly AuthService _authService;
 
         public RegisterView()
@@ -24,15 +30,64 @@ namespace SmartMeal.Views
         }
 
         // Fires when the user clicks the Register button.
-        // Passes all four form fields to AuthService, which validates them and talks to Supabase.
+        // Collects all form fields, passes them to AuthService, and shows the result.
+        // Required fields: Full Name, Email, Password, Confirm Password.
+        // Optional fields: Age, Gender, Height, Starting Weight.
         // A MessageBox always appears — either a success message or an error explaining what went wrong.
         public async void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
+            // Parse optional numeric fields.
+            // Blank is allowed (null), but non-blank invalid input should fail fast with a clear message.
+            var ageText = AgeTextBox.Text.Trim();
+            int? age = null;
+            if (!string.IsNullOrWhiteSpace(ageText))
+            {
+                if (!int.TryParse(ageText, out var parsedAge))
+                {
+                    MessageBox.Show("Please enter a valid age.");
+                    return;
+                }
+                age = parsedAge;
+            }
+
+            var heightText = HeightTextBox.Text.Trim();
+            decimal? heightCm = null;
+            if (!string.IsNullOrWhiteSpace(heightText))
+            {
+                if (!decimal.TryParse(heightText, out var parsedHeight))
+                {
+                    MessageBox.Show("Please enter a valid height in cm.");
+                    return;
+                }
+                heightCm = parsedHeight;
+            }
+
+            var weightText = WeightTextBox.Text.Trim();
+            decimal? weightKg = null;
+            if (!string.IsNullOrWhiteSpace(weightText))
+            {
+                if (!decimal.TryParse(weightText, out var parsedWeight))
+                {
+                    MessageBox.Show("Please enter a valid weight in kg.");
+                    return;
+                }
+                weightKg = parsedWeight;
+            }
+
+            // Read the gender Tag from the selected ComboBoxItem.
+            // ComboBoxItem.Tag stores the lowercase DB value ("male", "female", "other", or "").
+            var genderTag = (GenderComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            string? gender = string.IsNullOrEmpty(genderTag) ? null : genderTag;
+
             var result = await _authService.RegisterAsync(
                 FullNameTextBox.Text,
                 EmailTextBox.Text,
                 PasswordBox.Password,
-                ConfirmPasswordBox.Password);
+                ConfirmPasswordBox.Password,
+                age,
+                heightCm,
+                weightKg,
+                gender);
 
             // Always show a message so the user knows what happened.
             MessageBox.Show(result.Message);

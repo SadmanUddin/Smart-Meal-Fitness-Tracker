@@ -1,0 +1,264 @@
+<UserControl x:Class="SmartMeal.Views.WeightHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="720"
+             d:DesignWidth="1280">
+
+    <Grid Background="#EEF2F7">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0"
+                Background="#111827"
+                Padding="24">
+            <StackPanel>
+                <TextBlock Text="Smart Meal"
+                           Foreground="White"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Margin="0,0,0,30"/>
+
+                <Button Content="Dashboard"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Dashboard_Click"/>
+
+                <Button Content="Meals"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Meals_Click"/>
+
+                <Button Content="Activities"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Activities_Click"/>
+
+                <!-- History is the current page — highlighted blue, no click handler needed -->
+                <Button Content="History"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#2563EB"
+                        Foreground="White"
+                        BorderThickness="0"
+                        FontWeight="SemiBold"/>
+
+                <Button Content="Profile"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Profile_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1" Margin="28">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header row: title on left, latest weight stat on right -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Weight History"
+                               FontSize="30"
+                               FontWeight="Bold"
+                               Foreground="#111827"/>
+                    <TextBlock Text="Track your weight over time and log new weigh-ins."
+                               FontSize="14"
+                               Foreground="#6B7280"
+                               Margin="0,6,0,0"/>
+                </StackPanel>
+
+                <!-- Latest weight card -->
+                <Border Grid.Column="1"
+                        Background="White"
+                        CornerRadius="12"
+                        Padding="18,12"
+                        VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock Text="Latest Weight"
+                                   FontSize="12"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="LatestWeightBlock"
+                                   Text="—"
+                                   FontSize="26"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,4,0,2"/>
+                        <TextBlock x:Name="LatestWeightDateBlock"
+                                   Text=""
+                                   FontSize="11"
+                                   Foreground="#9CA3AF"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Log Weight panel -->
+            <Border Grid.Row="2"
+                    Background="White"
+                    CornerRadius="18"
+                    Padding="24">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="24"/>
+                        <ColumnDefinition Width="180"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Log Weight"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827"/>
+                        <TextBlock Text="Add a new weigh-in entry."
+                                   FontSize="13"
+                                   Foreground="#6B7280"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Weight (kg)"
+                                   FontSize="12"
+                                   Foreground="#6B7280"
+                                   Margin="0,0,0,5"/>
+                        <TextBox x:Name="WeightInputTextBox"
+                                 Height="38"
+                                 Padding="10"
+                                 FontSize="14"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Notes (optional)"
+                                   FontSize="12"
+                                   Foreground="#6B7280"
+                                   Margin="0,0,0,5"/>
+                        <TextBox x:Name="NotesTextBox"
+                                 Height="38"
+                                 Padding="10"
+                                 FontSize="14"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="6"
+                            Content="Log Weight"
+                            Width="120"
+                            Height="38"
+                            Background="#10B981"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontWeight="SemiBold"
+                            VerticalAlignment="Bottom"
+                            Click="LogWeight_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- Chart card -->
+            <Border Grid.Row="4"
+                    x:Name="ChartBorder"
+                    Background="White"
+                    CornerRadius="18"
+                    Padding="20"
+                    MinHeight="260">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Chart header with filter buttons -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="Weight Over Time"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="#111827"
+                                   VerticalAlignment="Center"/>
+
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal">
+                            <Button x:Name="Filter7DaysButton"
+                                    Content="7 Days"
+                                    Width="72"
+                                    Height="30"
+                                    Margin="0,0,6,0"
+                                    Background="#E5E7EB"
+                                    Foreground="#111827"
+                                    BorderThickness="0"
+                                    FontSize="12"
+                                    Click="Filter7Days_Click"/>
+                            <Button x:Name="Filter30DaysButton"
+                                    Content="30 Days"
+                                    Width="72"
+                                    Height="30"
+                                    Margin="0,0,6,0"
+                                    Background="#E5E7EB"
+                                    Foreground="#111827"
+                                    BorderThickness="0"
+                                    FontSize="12"
+                                    Click="Filter30Days_Click"/>
+                            <Button x:Name="FilterAllTimeButton"
+                                    Content="All Time"
+                                    Width="72"
+                                    Height="30"
+                                    Background="#2563EB"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    FontSize="12"
+                                    Click="FilterAllTime_Click"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Chart drawing area — the Grid fills available space,
+                         the Canvas is drawn to programmatically -->
+                    <Grid Grid.Row="2"
+                          x:Name="ChartAreaGrid"
+                          SizeChanged="ChartAreaGrid_SizeChanged"
+                          ClipToBounds="True">
+                        <Canvas x:Name="WeightChartCanvas"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
