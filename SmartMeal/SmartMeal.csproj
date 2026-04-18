@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="supabase.config.json">
+    <Content Include="supabase.config.json" Condition="Exists('supabase.config.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="supabase.config.local.json" Condition="Exists('supabase.config.local.json')">
