@@ -23,7 +23,8 @@ namespace SmartMeal.core.Services
 
         // Generates a full-day meal plan split into Breakfast, Lunch, Dinner, Snacks.
         // Returns null if the API call fails or the response cannot be parsed.
-        public async Task<MealPlan?> GenerateMealPlanAsync(MealPlanRequest request)
+        // Throws on API or parse failure so callers can surface the real error.
+        public async Task<MealPlan> GenerateMealPlanAsync(MealPlanRequest request)
         {
             var prompt = BuildPrompt(request);
 
@@ -31,41 +32,28 @@ namespace SmartMeal.core.Services
             {
                 contents = new[]
                 {
-                    new
-                    {
-                        parts = new[] { new { text = prompt } }
-                    }
+                    new { parts = new[] { new { text = prompt } } }
                 },
-                generationConfig = new
-                {
-                    temperature = 0.7,
-                    maxOutputTokens = 1024
-                }
+                generationConfig = new { temperature = 0.7, maxOutputTokens = 1024 }
             };
 
-            try
-            {
-                var url = $"{Endpoint}?key={_apiKey}";
-                var response = await _http.PostAsJsonAsync(url, body);
-                var raw = await response.Content.ReadAsStringAsync();
+            var url = $"{Endpoint}?key={_apiKey}";
+            var response = await _http.PostAsJsonAsync(url, body);
+            var raw = await response.Content.ReadAsStringAsync();
 
-                if (!response.IsSuccessStatusCode)
-                    throw new HttpRequestException($"Gemini API error {(int)response.StatusCode}: {raw}");
+            if (!response.IsSuccessStatusCode)
+                throw new HttpRequestException($"Gemini API returned {(int)response.StatusCode}: {raw}");
 
-                using var doc = JsonDocument.Parse(raw);
-                var text = doc.RootElement
-                    .GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString() ?? string.Empty;
+            using var doc = JsonDocument.Parse(raw);
+            var text = doc.RootElement
+                .GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString() ?? string.Empty;
 
-                return ParseMealPlan(text);
-            }
-            catch
-            {
-                return null;
-            }
+            return ParseMealPlan(text)
+                ?? throw new InvalidOperationException("Gemini returned a response that could not be parsed as a meal plan.");
         }
 
         private static string BuildPrompt(MealPlanRequest r)
@@ -96,8 +84,9 @@ namespace SmartMeal.core.Services
 
         private static MealPlan? ParseMealPlan(string text)
         {
-            // Strip markdown code fences if Gemini wrapped the JSON
             var clean = text.Trim();
+
+            // Strip markdown code fences
             if (clean.StartsWith("```"))
             {
                 var first = clean.IndexOf('\n');
@@ -105,6 +94,13 @@ namespace SmartMeal.core.Services
                 if (first >= 0 && last > first)
                     clean = clean[(first + 1)..last].Trim();
             }
+
+            // Gemini sometimes adds prose before/after the JSON object.
+            // Extract from the first '{' to the matching last '}'.
+            var start = clean.IndexOf('{');
+            var end   = clean.LastIndexOf('}');
+            if (start >= 0 && end > start)
+                clean = clean[start..(end + 1)];
 
             try
             {

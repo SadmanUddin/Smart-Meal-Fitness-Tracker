@@ -52,7 +52,7 @@ namespace SmartMeal.Views
             if (user == null) return;
 
             GenerateButton.IsEnabled = false;
-            StatusBlock.Text = "Generating your personalised plan...";
+            ShowStatus("Generating your personalised plan...", isError: false);
             ClearLists();
 
             try
@@ -70,26 +70,41 @@ namespace SmartMeal.Views
                     Allergies       = user.Allergies
                 });
 
-                if (plan == null)
-                {
-                    StatusBlock.Text = "Could not generate a plan. Please try again.";
-                    return;
-                }
-
                 BreakfastList.ItemsSource = plan.Breakfast;
                 LunchList.ItemsSource     = plan.Lunch;
                 DinnerList.ItemsSource    = plan.Dinner;
                 SnacksList.ItemsSource    = plan.Snacks;
-                StatusBlock.Text = string.Empty;
+                HideStatus();
             }
             catch (Exception ex)
             {
-                StatusBlock.Text = $"Error: {ex.Message}";
+                ShowStatus(ex.Message, isError: true);
             }
             finally
             {
                 GenerateButton.IsEnabled = true;
             }
+        }
+
+        private void ShowStatus(string message, bool isError)
+        {
+            StatusBlock.Text = message;
+            StatusBorder.Background = isError
+                ? new System.Windows.Media.SolidColorBrush(
+                      System.Windows.Media.Color.FromRgb(0xFE, 0xF2, 0xF2))
+                : new System.Windows.Media.SolidColorBrush(
+                      System.Windows.Media.Color.FromRgb(0xF0, 0xF9, 0xFF));
+            StatusBlock.Foreground = isError
+                ? new System.Windows.Media.SolidColorBrush(
+                      System.Windows.Media.Color.FromRgb(0xB9, 0x1C, 0x1C))
+                : new System.Windows.Media.SolidColorBrush(
+                      System.Windows.Media.Color.FromRgb(0x03, 0x69, 0xA1));
+            StatusBorder.Visibility = System.Windows.Visibility.Visible;
+        }
+
+        private void HideStatus()
+        {
+            StatusBorder.Visibility = System.Windows.Visibility.Collapsed;
         }
 
         private void ClearLists()
