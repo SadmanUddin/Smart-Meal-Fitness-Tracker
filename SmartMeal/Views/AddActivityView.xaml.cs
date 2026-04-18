@@ -13,6 +13,7 @@
 
 using System.Windows;
 using System.Windows.Controls;
+using SmartMeal.Helpers;
 using SmartMeal.core.Models;
 using SmartMeal.core.Services;
 
@@ -56,7 +57,7 @@ namespace SmartMeal.Views
                 return;
             }
 
-            if (!TryGetCurrentUserId(out var userId))
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
                 // No session — shouldn't happen in normal flow but handled defensively.
                 MessageBox.Show("No user logged in.");
@@ -114,29 +115,11 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new WeightHistoryView());
         }
 
-        // Placeholder — user profile editing not yet implemented.
+        // Navigate to ProfileView to edit user details.
         private void Profile_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "Profile view is not implemented yet.",
-                "Coming Soon",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _mainWindow.Navigate(new ProfileView());
         }
 
-        private bool TryGetCurrentUserId(out string userId)
-        {
-            userId = string.Empty;
-
-            var currentUser = _authService.CurrentUser;
-            if (currentUser == null)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(currentUser.Id))
-                return false;
-
-            userId = currentUser.Id;
-            return true;
-        }
     }
 }

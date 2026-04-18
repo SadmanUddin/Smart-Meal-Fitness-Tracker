@@ -11,10 +11,11 @@
 // Rows can be deleted individually. Deletion removes the row from the DB and
 // immediately refreshes the grid.
 //
-// Navigation buttons: Dashboard, Add Meal, Activities, History, Profile (coming soon).
+// Navigation buttons: Dashboard, Add Meal, Activities, History, Profile.
 
 using System.Windows;
 using System.Windows.Controls;
+using SmartMeal.Helpers;
 using SmartMeal.core.Services;
 
 namespace SmartMeal.Views
@@ -58,7 +59,7 @@ namespace SmartMeal.Views
         // depends on the other, which halves the wait time for those two queries.
         private async Task LoadMealsAsync()
         {
-            if (!TryGetCurrentUserId(out var userId))
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
                 MessageBox.Show("No user logged in.");
                 return;
@@ -159,14 +160,10 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new WeightHistoryView());
         }
 
-        // Placeholder — user profile editing not yet implemented.
+        // Navigate to ProfileView to edit user details.
         private void Profile_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "Profile view is not implemented yet.",
-                "Coming Soon",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _mainWindow.Navigate(new ProfileView());
         }
 
         // A flat, display-only record used as the DataGrid row model.
@@ -180,21 +177,6 @@ namespace SmartMeal.Views
             public decimal Grams { get; set; }
             public string MealTypeName { get; set; } = string.Empty;
             public string LogDate { get; set; } = string.Empty; // "yyyy-MM-dd" string from DB
-        }
-
-        private bool TryGetCurrentUserId(out string userId)
-        {
-            userId = string.Empty;
-
-            var currentUser = _authService.CurrentUser;
-            if (currentUser == null)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(currentUser.Id))
-                return false;
-
-            userId = currentUser.Id;
-            return true;
         }
 
         private static string ResolveFoodName(Dictionary<long, string> foodNameById, long foodId)

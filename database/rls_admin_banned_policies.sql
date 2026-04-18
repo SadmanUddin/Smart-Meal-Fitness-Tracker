@@ -88,6 +88,7 @@ drop policy if exists "Users can delete their own profile" on public.users;
 drop policy if exists users_select_own on public.users;
 drop policy if exists users_select_all_admin on public.users;
 drop policy if exists users_insert_own on public.users;
+drop policy if exists users_update_own_profile on public.users;
 drop policy if exists users_update_admin on public.users;
 drop policy if exists users_delete_admin on public.users;
 
@@ -108,6 +109,22 @@ using (public.is_current_user_admin());
 create policy users_insert_own
 on public.users
 for insert
+with check (
+    auth.uid() = id
+    and role = 'user'
+    and is_banned = false
+);
+
+-- Users can update their own profile data.
+-- with check keeps role/is_banned locked to safe user values to prevent
+-- self-escalation and self-unbanning.
+create policy users_update_own_profile
+on public.users
+for update
+using (
+    auth.uid() = id
+    and not public.is_current_user_banned()
+)
 with check (
     auth.uid() = id
     and role = 'user'

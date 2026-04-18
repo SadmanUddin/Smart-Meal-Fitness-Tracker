@@ -13,6 +13,7 @@
 
 using System.Windows;
 using System.Windows.Controls;
+using SmartMeal.Helpers;
 using SmartMeal.core.Services;
 
 namespace SmartMeal.Views
@@ -44,7 +45,7 @@ namespace SmartMeal.Views
                 return;
             }
 
-            if (!TryGetCurrentUserId(out var userId))
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
                 // Defensive check — shouldn't happen in normal flow since the user must
                 // be logged in to reach this view.
@@ -93,19 +94,14 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new AddActivityView());
         }
 
-        private bool TryGetCurrentUserId(out string userId)
+        private void History_Click(object sender, RoutedEventArgs e)
         {
-            userId = string.Empty;
+            _mainWindow.Navigate(new WeightHistoryView());
+        }
 
-            var currentUser = _authService.CurrentUser;
-            if (currentUser == null)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(currentUser.Id))
-                return false;
-
-            userId = currentUser.Id;
-            return true;
+        private void Profile_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new ProfileView());
         }
     }
 }

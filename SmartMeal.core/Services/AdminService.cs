@@ -26,8 +26,9 @@ namespace SmartMeal.core.Services
 
         // Returns all users ordered newest-first.
         // The admin RLS policy must exist on public.users:
-        //   CREATE POLICY "Admins can read all users" ON public.users FOR SELECT
-        //   USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin'));
+        //   CREATE POLICY users_select_all_admin
+        //   ON public.users FOR SELECT
+        //   USING (public.is_current_user_admin());
         public async Task<List<User>> GetAllUsersAsync()
         {
             var result = await _client.From<User>()
@@ -52,16 +53,18 @@ namespace SmartMeal.core.Services
         // Requires a corresponding admin SELECT policy on public.meal_logs.
         public async Task<int> GetTotalMealLogsCountAsync()
         {
-            var result = await _client.From<MealLog>().Get();
-            return result.Models.Count;
+            return await _client
+                .From<MealLog>()
+                .Count(Supabase.Postgrest.Constants.CountType.Exact);
         }
 
         // Counts all rows in activities across all users.
         // Requires a corresponding admin SELECT policy on public.activities.
         public async Task<int> GetTotalActivitiesCountAsync()
         {
-            var result = await _client.From<Activity>().Get();
-            return result.Models.Count;
+            return await _client
+                .From<Activity>()
+                .Count(Supabase.Postgrest.Constants.CountType.Exact);
         }
     }
 }

@@ -10,10 +10,11 @@
 //   - A "Balance" figure: goal − consumed + burned
 //   - A one-line preview of the most recent meal and most recent activity
 //
-// Navigation buttons: Add Meal, Add Activity, Set Goal, Meals, Logout, History, Profile (coming soon).
+// Navigation buttons: Add Meal, Add Activity, Set Goal, Meals, Logout, History, Profile.
 
 using System.Windows;
 using System.Windows.Controls;
+using SmartMeal.Helpers;
 using SmartMeal.core.Services;
 
 namespace SmartMeal.Views
@@ -84,7 +85,7 @@ namespace SmartMeal.Views
             // Guard: if no user is logged in, zero out every stat and return early.
             // This shouldn't happen in normal flow — LoginView always sets CurrentUser —
             // but it's a safe fallback to avoid showing stale or garbage data.
-            if (!TryGetCurrentUserId(out var userId))
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
                 MealsCountBlock.Text = "0";
                 CaloriesConsumedBlock.Text = "0";
@@ -102,9 +103,17 @@ namespace SmartMeal.Views
             var logs = await _mealService.GetTodayLogsAsync(userId);
             MealsCountBlock.Text = logs.Count.ToString();
 
-            // CalculateCaloriesConsumedAsync multiplies each log's grams by the food's
-            // calories_per_100g value to get actual kcal, then sums them.
-            var totalCaloriesConsumed = await _mealService.CalculateCaloriesConsumedAsync(logs);
+            // Fetch foods once and reuse for both calorie math and latest-meal label.
+            // This avoids two DB round-trips on every dashboard load.
+            var foods = await _foodService.GetPublicFoodsAsync();
+            var foodById = foods.ToDictionary(f => f.FoodId);
+
+            decimal totalCaloriesConsumed = 0m;
+            foreach (var log in logs)
+            {
+                if (foodById.TryGetValue(log.FoodId, out var food))
+                    totalCaloriesConsumed += (log.Grams / 100m) * food.CaloriesPer100g;
+            }
             var roundedConsumedCalories = (int)Math.Round(totalCaloriesConsumed);
             CaloriesConsumedBlock.Text = roundedConsumedCalories.ToString();
 
@@ -113,11 +122,9 @@ namespace SmartMeal.Views
             if (logs.Count > 0)
             {
                 var latestLog = logs[^1];
-                var foods = await _foodService.GetPublicFoodsAsync();
-                var foodNameById = foods.ToDictionary(f => f.FoodId, f => f.Name);
                 string latestFoodLabel;
-                if (foodNameById.TryGetValue(latestLog.FoodId, out var foodName))
-                    latestFoodLabel = foodName;
+                if (foodById.TryGetValue(latestLog.FoodId, out var food))
+                    latestFoodLabel = food.Name;
                 else
                     latestFoodLabel = $"Food ID {latestLog.FoodId}";
 
@@ -225,29 +232,11 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new WeightHistoryView());
         }
 
-        // Placeholder — user profile editing is not yet implemented.
+        // Navigate to ProfileView to edit user details (name, age, height, weight, gender).
         private void Profile_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "Profile view is not implemented yet.",
-                "Coming Soon",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _mainWindow.Navigate(new ProfileView());
         }
 
-        private bool TryGetCurrentUserId(out string userId)
-        {
-            userId = string.Empty;
-
-            var currentUser = _authService.CurrentUser;
-            if (currentUser == null)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(currentUser.Id))
-                return false;
-
-            userId = currentUser.Id;
-            return true;
-        }
     }
 }

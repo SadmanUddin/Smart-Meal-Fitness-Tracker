@@ -2,7 +2,31 @@
 
 > **Purpose:** This file is maintained after every significant change to give any developer a clear, up-to-date picture of what the app does, how it is structured, what has been done, and what still needs to be done.
 >
-> **Last updated:** 2026-04-17 (Session 5)
+> **Last updated:** 2026-04-18 (Session 8)
+
+---
+
+## Quick Architecture & Runtime Flow (Top Summary)
+
+### Architecture at a glance
+- `SmartMeal` (WPF UI): views + code-behind, user interactions, navigation.
+- `SmartMeal.core` (business/services): auth, meals, goals, activities, weights, admin logic.
+- `SmartMeal.Data` (infra): Supabase client bootstrap (`SupabaseClientProvider`).
+- `Supabase` backend: Auth + PostgreSQL (`public` schema) accessed through PostgREST.
+
+### How the app functions end-to-end
+1. App starts in `MainWindow`.
+2. `MainWindow.InitializeAsync()` loads Supabase config, validates it, initializes one shared client, and creates all services.
+3. UI starts on `RegisterView` (users can switch to `LoginView`).
+4. On login, `AuthService` signs in with Supabase Auth, ensures/loads `public.users` profile, sets `CurrentUser`, then routes by role/ban status.
+5. Each feature view calls service methods (`MealService`, `ActService`, `GoalService`, `WeightLogService`, etc.) to read/write data.
+6. Supabase JWT + RLS policies enforce user-scoped access (and admin policies where configured).
+7. Views refresh from DB responses and render updated state.
+
+### Core runtime pattern
+- Input in view -> validation in view/service -> service query to Supabase -> DB change/read -> UI reload.
+- Navigation is centralized through `MainWindow.Navigate(new SomeView())`.
+- Persistent data lives in Supabase; only transient UI state is kept in memory.
 
 ---
 
@@ -66,6 +90,7 @@ SmartMealSolution/
 │   │   ├── SetGoalView.xaml/.cs
 │   │   ├── MealsView.xaml/.cs
 │   │   ├── WeightHistoryView.xaml/.cs
+│   │   ├── ProfileView.xaml/.cs   ← User profile editing
 │   │   └── AdminDashboardView.xaml/.cs  ← Admin only: user table + ban/unban
 │   └── supabase.config.json    ← Credentials (gitignored — never commit)
 │
@@ -644,7 +669,7 @@ Understanding which data survives a restart is critical for knowing what feature
 | Weight logs | Yes | Yes | `weight_logs` — WeightHistoryView (log + graph) |
 | Protein/carbs/fat goals | Yes (columns exist) | Yes | `goals` — no UI |
 | Target weight goal | Yes (column exists) | Yes | `goals` — no UI |
-| User profile (age, height, gender) | Yes (columns exist) | Yes | `users` — no UI to edit after registration |
+| User profile (age, height, gender) | Yes (columns exist) | Yes | `users` — editable in `ProfileView` |
 
 ---
 
@@ -826,7 +851,7 @@ Confirmed the full configuration chain is intact and ready to use:
 | ~~MealsView shows raw FoodId number~~ | ~~MealsView.xaml~~ | Fixed in Session 3 — `MealViewRow` projection resolves names |
 | ~~MealsView shows raw MealTypeId number~~ | ~~MealsView.xaml~~ | Fixed in Session 3 — `MealViewRow` projection resolves names |
 | ~~Dashboard recent meal shows raw ID~~ | ~~DashboardView.xaml.cs~~ | Fixed in Session 3 — food name resolved via `GetPublicFoodsAsync()` lookup |
-| Sidebar navigation polish still incomplete | `AddMealView`, `SetGoalView`, `AddActivityView`, `MealsView`, `DashboardView` | Dashboard/Meals/Activities/History navigation works. Profile remains a "coming soon" stub. |
+| ~~Sidebar navigation polish still incomplete~~ | ~~`SetGoalView`~~ | Fixed in Session 7 — SetGoal sidebar now includes History and Profile buttons. |
 
 ### Missing Features
 | Feature | Status | Notes |
@@ -834,7 +859,7 @@ Confirmed the full configuration chain is intact and ready to use:
 | Activity history UI | Partial | Activities are persisted, but there is no dedicated full history/manage screen (only add + dashboard summary/recent). |
 | ~~Weight logging UI~~ | ~~Missing~~ | Implemented in Session 4 — `WeightHistoryView` with line graph and log form. |
 | Full goal editing | Partial | Only `calorie_goal` is collected. `protein_goal`, `carbs_goal`, `fat_goal`, `target_weight_kg` columns in `goals` table are unused. |
-| User profile editing (post-registration) | Partial | Age, height, weight, gender are now collected at registration. No screen to edit them after the fact. |
+| ~~User profile editing (post-registration)~~ | ~~Partial~~ | Implemented in Session 6 — `ProfileView` saves to `public.users` via `AuthService.UpdateCurrentUserProfileAsync`. |
 | Calorie detail UX | Partial | Dashboard shows total calories consumed, but no per-meal calorie breakdown. |
 | Food category display | Missing | No `FoodCategory` C# model. Category names not shown anywhere. |
 | ~~Admin / user management~~ | ~~Missing~~ | Implemented in Session 5 — `AdminDashboardView` with user table, ban/unban, stat cards, and role-based login routing. |
@@ -926,7 +951,9 @@ Files commented:
   - Row 4: Age | Gender (ComboBox: Prefer not to say / Male / Female / Other)
   - Row 5: Height (cm) | Starting Weight (kg)
   - All profile fields are optional — leaving them blank is valid.
-- `RegisterView.xaml.cs` — collects the new fields using `TryParse` for numerics (null if blank).
+- `RegisterView.xaml.cs` — optional numeric fields (age/height/weight) are parsed with strict handling:
+  - blank input is accepted as `null`
+  - invalid non-empty input is blocked with clear validation messages before calling `AuthService.RegisterAsync`
 - `AuthService.RegisterAsync` — updated signature:
   ```
   RegisterAsync(name, email, password, confirmPassword, age?, heightCm?, weightKg?, gender?)
@@ -957,7 +984,7 @@ Files commented:
   - Filled dot at each data point with the weight value above it
   - Redraws automatically when the chart area is resized (`SizeChanged` event)
 - **Time filter buttons**: 7 Days | 30 Days | All Time (active button highlighted blue)
-- Sidebar navigation: Dashboard, Meals, Activities, History (current, no click), Profile (coming soon)
+- Sidebar navigation: Dashboard, Meals, Activities, History (current, no click), Profile
 
 #### D. History button wired to WeightHistoryView across all views
 
@@ -971,7 +998,7 @@ Changed `History_Click` from a "Coming Soon" MessageBox to `_mainWindow.Navigate
 
 - Registration profile fields: now collected at registration
 - Weight history: now fully implemented
-- Profile editing (after registration): still not implemented
+- Profile editing (after registration): implemented in `ProfileView`
 
 ---
 
@@ -1024,6 +1051,110 @@ Run directly in Supabase SQL Editor:
 UPDATE public.users SET role = 'admin' WHERE email = 'your@email.com';
 ```
 No in-app UI for role promotion (by design — admin access is granted out-of-band).
+
+---
+
+### Session 6 — 2026-04-17
+**Who:** Developer
+**Branch:** `feature/supabase-ui-sync`
+
+#### A. Profile view implemented
+
+- Added `SmartMeal/Views/ProfileView.xaml` + `.xaml.cs`.
+- New screen loads current user profile from `AuthService.CurrentUser`.
+- Users can edit and save:
+  - `full_name`
+  - `age`
+  - `height_cm`
+  - `weight_kg`
+  - `gender`
+- `email` and `role` are displayed as read-only fields.
+- Save action validates optional numeric inputs and calls:
+  - `AuthService.UpdateCurrentUserProfileAsync(...)`
+
+#### B. AuthService profile update API added
+
+- Added `UpdateCurrentUserProfileAsync(...)` to `SmartMeal.core/Services/AuthService.cs`.
+- Method validates profile values, updates `public.users`, then refreshes `CurrentUser`.
+
+#### C. Navigation wiring
+
+- Replaced profile placeholders with real navigation:
+  - `DashboardView` → `ProfileView`
+  - `MealsView` → `ProfileView`
+  - `AddMealView` → `ProfileView`
+  - `AddActivityView` → `ProfileView`
+  - `WeightHistoryView` → `ProfileView`
+
+---
+
+### Session 7 — 2026-04-18
+**Who:** Developer
+**Branch:** `feature/supabase-ui-sync`
+
+#### A. Post-review reliability fixes
+
+- `AuthService.UpdateCurrentUserProfileAsync(...)` no longer mutates `CurrentUser` before DB update.
+- Profile update now uses a local copy, writes to DB first, then refreshes `CurrentUser`.
+- If profile weight changes, a matching `weight_logs` entry is inserted (`Notes = "Profile update"`), keeping profile snapshot and weight history aligned.
+
+#### B. Async event safety
+
+- Added top-level `try/catch` in:
+  - `RegisterView.RegisterButton_Click`
+  - `ProfileView.SaveProfile_Click`
+
+#### C. Admin service and performance
+
+- Updated stale admin-policy comment in `AdminService.GetAllUsersAsync`.
+- Switched admin total-count methods to server-side count (`Count(CountType.Exact)`) instead of loading all rows.
+
+#### D. UI consistency and cleanup
+
+- Added History + Profile buttons to `SetGoalView` sidebar and wired navigation handlers.
+- Removed duplicate `TryGetCurrentUserId` implementations by introducing `SmartMeal/Helpers/SessionHelper.cs`.
+- Dashboard now fetches foods once per load and reuses that data for both calorie math and latest-meal display.
+- `WeightHistoryView.ApplyFilter` now clones `_allLogs` for "All Time" instead of aliasing the same list reference.
+
+---
+
+### Session 8 — 2026-04-18
+**Who:** Developer
+**Branch:** `feature/supabase-ui-sync`
+
+#### A. Code review resolution summary (explicit)
+
+- Fixed: `UpdateCurrentUserProfileAsync` no longer mutates `CurrentUser` before DB write.
+- Fixed: profile save now writes first, then updates in-memory session state.
+- Fixed: `RegisterButton_Click` now has top-level `try/catch`.
+- Fixed: `ProfileView.SaveProfile_Click` now has top-level `try/catch`.
+- Fixed: admin total-count methods use server-side count (`Count(CountType.Exact)`) instead of loading all rows.
+- Fixed: stale admin RLS comment updated to current policy style (`is_current_user_admin()`).
+- Fixed: SetGoal sidebar now includes History and Profile buttons (with handlers).
+- Fixed: duplicate `TryGetCurrentUserId` logic centralized in `SmartMeal/Helpers/SessionHelper.cs`.
+- Fixed: dashboard no longer performs duplicate food fetches on load.
+- Fixed: `WeightHistoryView` all-time filter now copies list data instead of sharing list reference.
+- Fixed: profile weight updates now also write a `weight_logs` entry to keep history aligned.
+
+#### B. Files touched in this review pass
+
+- `SmartMeal.core/Services/AuthService.cs`
+- `SmartMeal.core/Services/AdminService.cs`
+- `SmartMeal/Views/RegisterView.xaml.cs`
+- `SmartMeal/Views/ProfileView.xaml.cs`
+- `SmartMeal/Views/SetGoalView.xaml`
+- `SmartMeal/Views/SetGoalView.xaml.cs`
+- `SmartMeal/Views/DashboardView.xaml.cs`
+- `SmartMeal/Views/MealsView.xaml.cs`
+- `SmartMeal/Views/AddMealView.xaml.cs`
+- `SmartMeal/Views/AddActivityView.xaml.cs`
+- `SmartMeal/Views/WeightHistoryView.xaml.cs`
+- `SmartMeal/Helpers/SessionHelper.cs` (new)
+
+#### C. Validation
+
+- `dotnet build SmartMeal/SmartMeal.csproj -p:EnableWindowsTargeting=true -m:1` passed.
+- `dotnet test SmartMealSolution/SmartMealSolution.sln -p:EnableWindowsTargeting=true -m:1` passed.
 
 ---
 

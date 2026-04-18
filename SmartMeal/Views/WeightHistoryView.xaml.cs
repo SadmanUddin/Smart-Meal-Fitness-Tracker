@@ -17,6 +17,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using SmartMeal.Helpers;
 using SmartMeal.core.Models;
 using SmartMeal.core.Services;
 
@@ -59,7 +60,7 @@ namespace SmartMeal.Views
         // them here to get oldest-first, which is the correct direction for a time-series graph.
         private async Task LoadWeightLogsAsync()
         {
-            if (!TryGetCurrentUserId(out var userId))
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
                 return;
 
             try
@@ -83,7 +84,7 @@ namespace SmartMeal.Views
         private void ApplyFilter()
         {
             if (_filterDays == 0)
-                _displayedLogs = _allLogs;
+                _displayedLogs = _allLogs.ToList();
             else
             {
                 var cutoff = DateTime.UtcNow.AddDays(-_filterDays);
@@ -118,7 +119,7 @@ namespace SmartMeal.Views
                 return;
             }
 
-            if (!TryGetCurrentUserId(out var userId))
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
                 MessageBox.Show("No user logged in.");
                 return;
@@ -391,26 +392,8 @@ namespace SmartMeal.Views
 
         private void Profile_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                "Profile view is not implemented yet.",
-                "Coming Soon",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            _mainWindow.Navigate(new ProfileView());
         }
 
-        private bool TryGetCurrentUserId(out string userId)
-        {
-            userId = string.Empty;
-
-            var currentUser = _authService.CurrentUser;
-            if (currentUser == null)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(currentUser.Id))
-                return false;
-
-            userId = currentUser.Id;
-            return true;
-        }
     }
 }

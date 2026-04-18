@@ -174,6 +174,100 @@ namespace SmartMeal.core.Services
             }
         }
 
+        // Updates the current user's profile fields in public.users.
+        //
+        // Editable fields:
+        //   - full_name (required)
+        //   - age, height_cm, weight_kg, gender (all optional)
+        //
+        // On success, CurrentUser is refreshed from the DB so every view sees
+        // the latest values immediately.
+        public async Task<(bool Success, string Message)> UpdateCurrentUserProfileAsync(
+            string fullName,
+            int? age = null,
+            decimal? heightCm = null,
+            decimal? weightKg = null,
+            string? gender = null)
+        {
+            var currentUser = CurrentUser;
+            if (currentUser == null || string.IsNullOrWhiteSpace(currentUser.Id))
+                return (false, "No user is currently logged in.");
+
+            var cleanedName = fullName.Trim();
+            if (string.IsNullOrWhiteSpace(cleanedName))
+                return (false, "Full name is required.");
+
+            if (age.HasValue && (age.Value < 1 || age.Value > 120))
+                return (false, "Please enter a valid age (1–120).");
+            if (heightCm.HasValue && heightCm.Value <= 0)
+                return (false, "Please enter a valid height in cm.");
+            if (weightKg.HasValue && weightKg.Value <= 0)
+                return (false, "Please enter a valid weight in kg.");
+
+            var normalizedGender = NormalizeGender(gender);
+            if (!string.IsNullOrWhiteSpace(gender) && normalizedGender == null)
+                return (false, "Please select a valid gender option.");
+
+            try
+            {
+                // Work on a local copy first so CurrentUser cannot drift from DB state
+                // if the UPDATE request fails.
+                var previousWeight = currentUser.WeightKg;
+                var updatedUser = new User
+                {
+                    Id = currentUser.Id,
+                    FullName = cleanedName,
+                    Email = currentUser.Email,
+                    Role = currentUser.Role,
+                    Age = age,
+                    HeightCm = heightCm,
+                    WeightKg = weightKg,
+                    Gender = normalizedGender,
+                    CreatedAt = currentUser.CreatedAt,
+                    IsBanned = currentUser.IsBanned
+                };
+
+                await _client.From<User>()
+                    .Where(u => u.Id == updatedUser.Id)
+                    .Update(updatedUser);
+
+                // Re-read from DB so CurrentUser reflects exactly what was persisted.
+                var refreshed = await _client.From<User>()
+                    .Where(u => u.Id == updatedUser.Id)
+                    .Get();
+                var latest = refreshed.Models.FirstOrDefault();
+                if (latest != null)
+                    CurrentUser = latest;
+                else
+                    CurrentUser = updatedUser;
+
+                // Keep weight history aligned with the profile's weight snapshot.
+                if (weightKg.HasValue && (!previousWeight.HasValue || previousWeight.Value != weightKg.Value))
+                {
+                    try
+                    {
+                        await _client.From<WeightLog>().Insert(new WeightLog
+                        {
+                            UserId = updatedUser.Id,
+                            WeightKg = weightKg.Value,
+                            LoggedAt = DateTime.UtcNow,
+                            Notes = "Profile update"
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        return (true, $"Profile updated, but weight history entry failed: {ex.Message}");
+                    }
+                }
+
+                return (true, "Profile updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
         // Signs the user out.
         // Tells Supabase Auth to invalidate the session token, then clears CurrentUser
         // so the rest of the app knows nobody is logged in anymore.
