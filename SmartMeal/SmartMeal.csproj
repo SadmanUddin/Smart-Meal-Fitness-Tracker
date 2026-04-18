@@ -15,10 +15,10 @@
 
   <ItemGroup>
     <Content Include="supabase.config.json" Condition="Exists('supabase.config.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="supabase.config.local.json" Condition="Exists('supabase.config.local.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="supabase.config.example.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

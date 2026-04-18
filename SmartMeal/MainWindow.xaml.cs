@@ -148,7 +148,8 @@ namespace SmartMeal
         private static async Task<SupabaseConfig> ReadConfigFileAsync(string path)
         {
             var json = await File.ReadAllTextAsync(path);
-            return JsonSerializer.Deserialize<SupabaseConfig>(json)
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<SupabaseConfig>(json, opts)
                 ?? throw new InvalidOperationException($"Could not load Supabase config file: {path}");
         }
 
