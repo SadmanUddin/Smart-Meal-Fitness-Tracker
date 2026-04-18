@@ -26,19 +26,26 @@ namespace SmartMeal.core.Services
         // Throws on API or parse failure so callers can surface the real error.
         public async Task<MealPlan> GenerateMealPlanAsync(MealPlanRequest request)
         {
+            if (string.IsNullOrWhiteSpace(_apiKey))
+                throw new InvalidOperationException(
+                    "GeminiApiKey is empty — check that supabase.config.json has been saved with the key and rebuild the solution.");
+
             var prompt = BuildPrompt(request);
 
-            var body = new
+            var bodyJson = JsonSerializer.Serialize(new
             {
                 contents = new[]
                 {
                     new { parts = new[] { new { text = prompt } } }
                 },
                 generationConfig = new { temperature = 0.7, maxOutputTokens = 1024 }
-            };
+            });
 
-            var url = $"{Endpoint}?key={_apiKey}";
-            var response = await _http.PostAsJsonAsync(url, body);
+            using var req = new HttpRequestMessage(HttpMethod.Post, $"{Endpoint}?key={_apiKey}");
+            req.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+            req.Headers.Add("x-goog-api-key", _apiKey);
+
+            var response = await _http.SendAsync(req);
             var raw = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
