@@ -176,7 +176,20 @@
                                    FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="#111827"
-                                   Margin="0,10,0,0"/>
+                                   Margin="0,10,0,4"/>
+                        <ProgressBar x:Name="CaloriesProgressBar"
+                                     Height="6"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="0"
+                                     Foreground="#10B981"
+                                     Background="#E5E7EB"
+                                     BorderThickness="0"
+                                     Margin="0,0,0,4"/>
+                        <TextBlock x:Name="CaloriesStatusBlock"
+                                   Text=""
+                                   FontSize="11"
+                                   Foreground="#6B7280"/>
                     </StackPanel>
                 </Border>
 
