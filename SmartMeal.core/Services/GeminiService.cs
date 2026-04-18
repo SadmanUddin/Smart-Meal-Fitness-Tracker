@@ -6,15 +6,16 @@ using System.Text.Json.Serialization;
 
 namespace SmartMeal.core.Services
 {
-    // Calls the Gemini 1.5 Flash REST API to generate a personalised daily meal plan.
+    // Calls the Gemini REST API to generate a personalised daily meal plan.
     // The prompt is built from the user's profile so recommendations respect their
     // calorie goal, dietary preferences, and allergies.
     public class GeminiService
     {
         private readonly string _apiKey;
         private static readonly HttpClient _http = new();
+        private const string Model = "gemini-2.5-flash";
         private const string Endpoint =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+            $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent";
 
         public GeminiService(string apiKey)
         {
@@ -28,7 +29,7 @@ namespace SmartMeal.core.Services
         {
             if (string.IsNullOrWhiteSpace(_apiKey))
                 throw new InvalidOperationException(
-                    "GeminiApiKey is empty — check that supabase.config.json has been saved with the key and rebuild the solution.");
+                    "Gemini API key is empty. Set GeminiApiKey in supabase.config.json or SMARTMEAL_GEMINI_API_KEY.");
 
             var prompt = BuildPrompt(request);
 
@@ -41,7 +42,7 @@ namespace SmartMeal.core.Services
                 generationConfig = new { temperature = 0.7, maxOutputTokens = 1024 }
             });
 
-            using var req = new HttpRequestMessage(HttpMethod.Post, $"{Endpoint}?key={_apiKey}");
+            using var req = new HttpRequestMessage(HttpMethod.Post, Endpoint);
             req.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
             req.Headers.Add("x-goog-api-key", _apiKey);
 
