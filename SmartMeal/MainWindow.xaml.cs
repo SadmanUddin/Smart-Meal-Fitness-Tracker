@@ -118,7 +118,12 @@ namespace SmartMeal
             var envKey = Environment.GetEnvironmentVariable(KeyEnvVar);
             var envRedirect = Environment.GetEnvironmentVariable(RedirectEnvVar);
             if (!string.IsNullOrWhiteSpace(envUrl) && !string.IsNullOrWhiteSpace(envKey))
-                return new SupabaseConfig(envUrl.Trim(), envKey.Trim(), NormalizeOptional(envRedirect));
+                return new SupabaseConfig
+                {
+                    SupabaseUrl = envUrl.Trim(),
+                    SupabaseAnonKey = envKey.Trim(),
+                    SupabaseEmailRedirectUrl = NormalizeOptional(envRedirect)
+                };
 
             // Safe option 2: local config files (gitignored).
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -173,13 +178,17 @@ namespace SmartMeal
             }
         }
 
-        // A lightweight record just for deserialising supabase.config.json.
-        // The property names here must exactly match the JSON keys in the file.
-        private record SupabaseConfig(
-            string SupabaseUrl,
-            string SupabaseAnonKey,
-            string? SupabaseEmailRedirectUrl = null,
-            string? UsdaApiKey = null,
-            string? GeminiApiKey = null);
+        // A plain class for deserialising supabase.config.json.
+        // Using init-only properties instead of a positional record avoids a known
+        // System.Text.Json issue where optional constructor parameters are silently
+        // dropped and come back as null even when present in the JSON.
+        private class SupabaseConfig
+        {
+            public string SupabaseUrl { get; init; } = string.Empty;
+            public string SupabaseAnonKey { get; init; } = string.Empty;
+            public string? SupabaseEmailRedirectUrl { get; init; }
+            public string? UsdaApiKey { get; init; }
+            public string? GeminiApiKey { get; init; }
+        }
     }
 }
