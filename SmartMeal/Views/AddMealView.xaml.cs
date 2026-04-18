@@ -32,6 +32,7 @@ namespace SmartMeal.Views
 
         // The food the user picked from the search results.
         private FoodSearchResult? _selectedFood;
+        private bool _isApplyingSelection;
 
         // Debounce timer — fires the API call 400ms after the user stops typing.
         private readonly DispatcherTimer _searchDebounce;
@@ -87,6 +88,9 @@ namespace SmartMeal.Views
         // and restarts the debounce timer if the query is long enough.
         private void FoodSearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (_isApplyingSelection)
+                return;
+
             _selectedFood = null;
             SelectedFoodBorder.Visibility = Visibility.Collapsed;
             FoodResultsBorder.Visibility = Visibility.Collapsed;
@@ -134,12 +138,20 @@ namespace SmartMeal.Views
         {
             if (FoodResultsListBox.SelectedItem is not FoodSearchResult result) return;
 
-            _selectedFood = result;
-            FoodResultsBorder.Visibility = Visibility.Collapsed;
-            FoodSearchTextBox.Text = string.Empty;
+            _isApplyingSelection = true;
+            try
+            {
+                _selectedFood = result;
+                FoodResultsBorder.Visibility = Visibility.Collapsed;
+                FoodSearchTextBox.Text = string.Empty;
 
-            SelectedFoodLabel.Text = $"{result.Name} — {result.CaloriesPer100g:F0} kcal per 100g";
-            SelectedFoodBorder.Visibility = Visibility.Visible;
+                SelectedFoodLabel.Text = $"{result.Name} — {result.CaloriesPer100g:F0} kcal per 100g";
+                SelectedFoodBorder.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                _isApplyingSelection = false;
+            }
 
             FoodResultsListBox.SelectedItem = null;
         }
@@ -158,7 +170,11 @@ namespace SmartMeal.Views
         // food_id FK, then inserts the meal_log row.
         private async void AddMeal_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedFood == null)
+            var selectedFood = _selectedFood;
+            if (selectedFood == null && FoodResultsListBox.SelectedItem is FoodSearchResult pendingSelection)
+                selectedFood = pendingSelection;
+
+            if (selectedFood == null)
             {
                 MessageBox.Show("Please search and select a food item.");
                 return;
@@ -185,7 +201,7 @@ namespace SmartMeal.Views
             {
                 // Cache the USDA food in food_items so the FK in meal_logs is valid
                 // and calorie calculations on the dashboard continue to work.
-                var foodItem = await _foodService.UpsertSearchedFoodAsync(_selectedFood, userId);
+                var foodItem = await _foodService.UpsertSearchedFoodAsync(selectedFood, userId);
                 await _mealService.AddMealLogAsync(userId, foodItem.FoodId, grams, mealType.MealTypeId);
                 MessageBox.Show("Meal logged successfully!");
                 _mainWindow.Navigate(new DashboardView());
