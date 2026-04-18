@@ -70,17 +70,22 @@ namespace SmartMeal.core.Services
         // meal_logs always points to a real food_items row, and calorie lookups continue to work.
         public async Task<FoodItem> UpsertSearchedFoodAsync(FoodSearchResult result, string userId)
         {
-            // Reuse any existing food with the same name — public seeded or previously cached.
-            var check = await _client.From<FoodItem>()
-                .Where(f => f.Name == result.Name && f.IsActive == true)
-                .Get();
+            var foodName = result.Name.Trim();
+            if (string.IsNullOrWhiteSpace(foodName))
+                throw new InvalidOperationException("USDA food name is empty.");
 
-            if (check.Models.FirstOrDefault() is { } existing)
+            // Avoid filtering by food name on the server because USDA names often contain
+            // commas/apostrophes, which can break PostgREST logic-tree parsing in some SDK filters.
+            // Instead, fetch the small accessible set and match in memory by exact name.
+            var accessibleFoods = await GetAccessibleFoodsAsync(userId);
+            var existing = accessibleFoods.FirstOrDefault(f =>
+                string.Equals(f.Name, foodName, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
                 return existing;
 
             var inserted = await _client.From<FoodItem>().Insert(new FoodItem
             {
-                Name = result.Name,
+                Name = foodName,
                 CaloriesPer100g = result.CaloriesPer100g,
                 ProteinPer100g = result.ProteinPer100g,
                 CarbsPer100g = result.CarbsPer100g,
