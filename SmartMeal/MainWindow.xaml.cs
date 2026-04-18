@@ -24,6 +24,8 @@ namespace SmartMeal
         private const string UrlEnvVar = "SMARTMEAL_SUPABASE_URL";
         private const string KeyEnvVar = "SMARTMEAL_SUPABASE_ANON_KEY";
         private const string RedirectEnvVar = "SMARTMEAL_SUPABASE_EMAIL_REDIRECT_URL";
+        private const string UsdaEnvVar = "SMARTMEAL_USDA_API_KEY";
+        private const string GeminiEnvVar = "SMARTMEAL_GEMINI_API_KEY";
 
         // All services are initialised asynchronously in InitializeAsync() once the Supabase
         // client is ready. They are declared as null! here because they cannot be created
@@ -113,33 +115,49 @@ namespace SmartMeal
 
         private async Task<SupabaseConfig> LoadSupabaseConfigAsync()
         {
-            // Safe option 1: VS environment variables (recommended for local secrets).
+            // Safe option 1: environment variables.
             var envUrl = Environment.GetEnvironmentVariable(UrlEnvVar);
             var envKey = Environment.GetEnvironmentVariable(KeyEnvVar);
             var envRedirect = Environment.GetEnvironmentVariable(RedirectEnvVar);
-            if (!string.IsNullOrWhiteSpace(envUrl) && !string.IsNullOrWhiteSpace(envKey))
-                return new SupabaseConfig
-                {
-                    SupabaseUrl = envUrl.Trim(),
-                    SupabaseAnonKey = envKey.Trim(),
-                    SupabaseEmailRedirectUrl = NormalizeOptional(envRedirect)
-                };
+            var envUsdaKey = Environment.GetEnvironmentVariable(UsdaEnvVar);
+            var envGeminiKey = Environment.GetEnvironmentVariable(GeminiEnvVar);
 
-            // Safe option 2: local config files (gitignored).
+            // Safe option 2: local config files.
+            // Prefer project-root files over output copies to avoid stale bin/Debug config.
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", ".."));
             var candidatePaths = new[]
             {
+                Path.Combine(projectRoot, "supabase.config.local.json"),
+                Path.Combine(projectRoot, "supabase.config.json"),
                 Path.Combine(baseDir, "supabase.config.local.json"),
                 Path.Combine(baseDir, "supabase.config.json"),
-                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "supabase.config.local.json")),
-                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "supabase.config.json"))
             };
 
+            var merged = new SupabaseConfig();
             foreach (var path in candidatePaths)
             {
                 if (File.Exists(path))
-                    return await ReadConfigFileAsync(path);
+                {
+                    var loaded = await ReadConfigFileAsync(path);
+                    MergeConfig(merged, loaded);
+                }
             }
+
+            // Environment variables override file values when present.
+            if (!string.IsNullOrWhiteSpace(envUrl))
+                merged.SupabaseUrl = envUrl.Trim();
+            if (!string.IsNullOrWhiteSpace(envKey))
+                merged.SupabaseAnonKey = envKey.Trim();
+            if (!string.IsNullOrWhiteSpace(envRedirect))
+                merged.SupabaseEmailRedirectUrl = NormalizeOptional(envRedirect);
+            if (!string.IsNullOrWhiteSpace(envUsdaKey))
+                merged.UsdaApiKey = envUsdaKey.Trim();
+            if (!string.IsNullOrWhiteSpace(envGeminiKey))
+                merged.GeminiApiKey = envGeminiKey.Trim();
+
+            if (!string.IsNullOrWhiteSpace(merged.SupabaseUrl) && !string.IsNullOrWhiteSpace(merged.SupabaseAnonKey))
+                return merged;
 
             throw new FileNotFoundException(
                 $"Supabase config not found. Set environment variables `{UrlEnvVar}` and `{KeyEnvVar}`, or create `supabase.config.local.json` from `supabase.config.example.json` in the SmartMeal project.");
@@ -156,6 +174,24 @@ namespace SmartMeal
             var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             return JsonSerializer.Deserialize<SupabaseConfig>(json, opts)
                 ?? throw new InvalidOperationException($"Could not load Supabase config file: {path}");
+        }
+
+        private static void MergeConfig(SupabaseConfig target, SupabaseConfig source)
+        {
+            if (string.IsNullOrWhiteSpace(target.SupabaseUrl) && !string.IsNullOrWhiteSpace(source.SupabaseUrl))
+                target.SupabaseUrl = source.SupabaseUrl.Trim();
+
+            if (string.IsNullOrWhiteSpace(target.SupabaseAnonKey) && !string.IsNullOrWhiteSpace(source.SupabaseAnonKey))
+                target.SupabaseAnonKey = source.SupabaseAnonKey.Trim();
+
+            if (string.IsNullOrWhiteSpace(target.SupabaseEmailRedirectUrl) && !string.IsNullOrWhiteSpace(source.SupabaseEmailRedirectUrl))
+                target.SupabaseEmailRedirectUrl = NormalizeOptional(source.SupabaseEmailRedirectUrl);
+
+            if (string.IsNullOrWhiteSpace(target.UsdaApiKey) && !string.IsNullOrWhiteSpace(source.UsdaApiKey))
+                target.UsdaApiKey = source.UsdaApiKey.Trim();
+
+            if (string.IsNullOrWhiteSpace(target.GeminiApiKey) && !string.IsNullOrWhiteSpace(source.GeminiApiKey))
+                target.GeminiApiKey = source.GeminiApiKey.Trim();
         }
 
         // Guards against a developer accidentally shipping the app with placeholder credentials.
@@ -179,16 +215,15 @@ namespace SmartMeal
         }
 
         // A plain class for deserialising supabase.config.json.
-        // Using init-only properties instead of a positional record avoids a known
-        // System.Text.Json issue where optional constructor parameters are silently
-        // dropped and come back as null even when present in the JSON.
+        // Setters are used because startup merges values from multiple sources
+        // (project file, output file, environment variables).
         private class SupabaseConfig
         {
-            public string SupabaseUrl { get; init; } = string.Empty;
-            public string SupabaseAnonKey { get; init; } = string.Empty;
-            public string? SupabaseEmailRedirectUrl { get; init; }
-            public string? UsdaApiKey { get; init; }
-            public string? GeminiApiKey { get; init; }
+            public string SupabaseUrl { get; set; } = string.Empty;
+            public string SupabaseAnonKey { get; set; } = string.Empty;
+            public string? SupabaseEmailRedirectUrl { get; set; }
+            public string? UsdaApiKey { get; set; }
+            public string? GeminiApiKey { get; set; }
         }
     }
 }
