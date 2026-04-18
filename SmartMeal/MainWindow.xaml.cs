@@ -39,6 +39,7 @@ namespace SmartMeal
         // all other views pull their services.
         public AdminService AdminService { get; private set; } = null!;
         public FoodSearchService FoodSearchService { get; private set; } = null!;
+        public GeminiService GeminiService { get; private set; } = null!;
 
         public MainWindow()
         {
@@ -95,6 +96,7 @@ namespace SmartMeal
             ActService = new ActService(provider.Client);
             AdminService = new AdminService(provider.Client);
             FoodSearchService = new FoodSearchService(config.UsdaApiKey);
+            GeminiService = new GeminiService(config.GeminiApiKey ?? string.Empty);
 
             // Show the registration screen first. New users register, existing users
             // navigate to login from the link at the bottom of the register form.
@@ -176,6 +178,7 @@ namespace SmartMeal
             string SupabaseUrl,
             string SupabaseAnonKey,
             string? SupabaseEmailRedirectUrl = null,
-            string? UsdaApiKey = null);
+            string? UsdaApiKey = null,
+            string? GeminiApiKey = null);
     }
 }

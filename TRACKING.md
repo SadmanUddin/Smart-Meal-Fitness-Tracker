@@ -2,7 +2,7 @@
 
 > **Purpose:** This file is maintained after every significant change to give any developer a clear, up-to-date picture of what the app does, how it is structured, what has been done, and what still needs to be done.
 >
-> **Last updated:** 2026-04-18 (Session 9)
+> **Last updated:** 2026-04-18 (Session 10)
 
 ---
 
@@ -1194,6 +1194,70 @@ The `target_weight_kg` column in the `goals` table was previously mapped in the 
 - Added `UpdateTargetWeightLabel()` to populate the amber stat card.
 - `DrawChart` extended Y-axis range to include the target weight so the dashed line is never clipped.
 - Dashed amber line drawn at `_targetWeight` Y-position with a label ("Target X.X kg") when target is set.
+
+---
+
+### Session 10 — 2026-04-18
+**Who:** Developer
+**Branch:** `feature/supabase-ui-sync`
+
+#### A. Food preferences, allergies, and AI-powered meal recommendations
+
+**`database/add_user_preferences.sql`** (new):
+- Adds `food_preferences text NOT NULL DEFAULT ''` and `allergies text NOT NULL DEFAULT ''` columns to `public.users`.
+- Uses `IF NOT EXISTS` so it is idempotent. Run once in the Supabase SQL Editor.
+
+**`SmartMeal.core/Models/User.cs`:**
+- Added `FoodPreferences` (mapped to `food_preferences`) and `Allergies` (mapped to `allergies`) properties.
+- Both are `string` with empty string default to match the DB default.
+
+**`SmartMeal.core/Services/GeminiService.cs`** (new):
+- Calls Gemini 1.5 Flash REST API (`gemini-1.5-flash:generateContent`).
+- `GenerateMealPlanAsync(MealPlanRequest)` builds a prompt from user profile (goal, age, gender, weight, height, preferences, allergies) and returns a `MealPlan` with Breakfast/Lunch/Dinner/Snacks lists.
+- Strips markdown code fences from Gemini response before JSON parsing.
+- Returns `null` on any error (network failure, parse failure) — caller shows an error message.
+- `MealPlanRequest`, `MealPlan`, and `MealItem` records defined in the same file.
+
+**`SmartMeal.core/Services/AuthService.cs`:**
+- `UpdateCurrentUserProfileAsync` extended with `string? foodPreferences` and `string? allergies` parameters (both default to `null`, meaning "keep existing value").
+- `updatedUser` now includes both fields, defaulting to current user's values if new values are null.
+
+**`SmartMeal/MainWindow.xaml.cs`:**
+- Added `GeminiService` public property.
+- `SupabaseConfig` record extended with `string? GeminiApiKey`.
+- `GeminiService` instantiated in `InitializeAsync` using the key from config.
+
+**`SmartMeal/Views/ProfileView.xaml`:**
+- Added "Dietary Preferences" checkbox group: Vegetarian, Vegan, Halal, Keto, High-Protein, Low-Carb, Gluten-Free, Dairy-Free.
+- Added "Allergies" checkbox group: Nuts, Dairy, Gluten, Shellfish, Eggs, Soy, Fish, Wheat.
+- Added "Recommendations" sidebar nav button.
+- Grid row definitions expanded to accommodate two new checkbox sections.
+
+**`SmartMeal/Views/ProfileView.xaml.cs`:**
+- `LoadProfileFromCurrentUser` now reads `FoodPreferences` and `Allergies` from `CurrentUser` and pre-checks the relevant checkboxes.
+- `SaveProfile_Click` collects checked tags into comma-separated strings via `CollectCheckedTags` helper and passes them to `UpdateCurrentUserProfileAsync`.
+- Added `CollectCheckedTags` helper method.
+- Added `Recommendations_Click` navigation handler.
+
+**`SmartMeal/Views/RecommendationsView.xaml`** (new):
+- Sidebar with all nav buttons; Recommendations is highlighted blue.
+- Summary bar shows Goal, Preferences, and Allergies from the user's profile.
+- "Generate Plan" button triggers AI generation.
+- TabControl with Breakfast / Lunch / Dinner / Snacks tabs.
+- Each tab uses an `ItemsControl` with a card template showing meal name, description, and calorie badge.
+
+**`SmartMeal/Views/RecommendationsView.xaml.cs`** (new):
+- `LoadSummaryAsync` fetches goal and reads preferences/allergies from `CurrentUser` to populate the summary bar.
+- `Generate_Click` calls `GeminiService.GenerateMealPlanAsync` with user context, disables button during generation, shows status message, then populates all four tab lists.
+- Full navigation handlers for all sidebar buttons.
+
+**All other views (DashboardView, MealsView, AddActivityView, WeightHistoryView):**
+- Added "Recommendations" sidebar button to XAML.
+- Added `Recommendations_Click` handler to code-behind navigating to `RecommendationsView`.
+
+**Setup required:**
+1. Run `database/add_user_preferences.sql` in the Supabase SQL Editor to add the two new columns.
+2. Ensure `supabase.config.json` contains `"GeminiApiKey": "YOUR_KEY"` (already done locally).
 
 ---
 

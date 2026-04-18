@@ -187,7 +187,9 @@ namespace SmartMeal.core.Services
             int? age = null,
             decimal? heightCm = null,
             decimal? weightKg = null,
-            string? gender = null)
+            string? gender = null,
+            string? foodPreferences = null,
+            string? allergies = null)
         {
             var currentUser = CurrentUser;
             if (currentUser == null || string.IsNullOrWhiteSpace(currentUser.Id))
@@ -224,7 +226,9 @@ namespace SmartMeal.core.Services
                     WeightKg = weightKg,
                     Gender = normalizedGender,
                     CreatedAt = currentUser.CreatedAt,
-                    IsBanned = currentUser.IsBanned
+                    IsBanned = currentUser.IsBanned,
+                    FoodPreferences = foodPreferences ?? currentUser.FoodPreferences,
+                    Allergies = allergies ?? currentUser.Allergies
                 };
 
                 await _client.From<User>()
