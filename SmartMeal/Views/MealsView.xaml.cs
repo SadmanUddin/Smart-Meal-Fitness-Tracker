@@ -166,6 +166,11 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new ProfileView());
         }
 
+        private void Recommendations_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new RecommendationsView());
+        }
+
         // A flat, display-only record used as the DataGrid row model.
         // We project from MealLog (which has raw integer IDs) into this type
         // so the DataGrid columns can bind directly to human-readable strings

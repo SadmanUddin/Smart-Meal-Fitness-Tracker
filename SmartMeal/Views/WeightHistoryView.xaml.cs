@@ -451,5 +451,10 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new ProfileView());
         }
 
+        private void Recommendations_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new RecommendationsView());
+        }
+
     }
 }

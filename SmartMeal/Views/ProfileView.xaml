@@ -59,6 +59,15 @@
                         FontWeight="SemiBold"
                         Click="History_Click"/>
 
+                <Button Content="Recommendations"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Recommendations_Click"/>
+
                 <Button Content="Profile"
                         Height="42"
                         Margin="0,0,0,12"
@@ -98,6 +107,10 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="14"/>
                         <RowDefinition Height="Auto"/>
@@ -223,7 +236,43 @@
                         </StackPanel>
                     </Grid>
 
-                    <Border Grid.Row="6"
+                    <!-- Food Preferences checkboxes -->
+                    <StackPanel Grid.Row="6">
+                        <TextBlock Text="Dietary Preferences"
+                                   FontSize="13"
+                                   Foreground="#6B7280"
+                                   Margin="0,0,0,8"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="PrefVegetarian"  Content="Vegetarian"  Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefVegan"        Content="Vegan"        Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefHalal"        Content="Halal"        Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefKeto"         Content="Keto"         Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefHighProtein"  Content="High-Protein" Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefLowCarb"      Content="Low-Carb"     Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefGlutenFree"   Content="Gluten-Free"  Margin="0,0,16,8"/>
+                            <CheckBox x:Name="PrefDairyFree"    Content="Dairy-Free"   Margin="0,0,16,8"/>
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <!-- Allergies checkboxes -->
+                    <StackPanel Grid.Row="8">
+                        <TextBlock Text="Allergies"
+                                   FontSize="13"
+                                   Foreground="#6B7280"
+                                   Margin="0,0,0,8"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="AllergyNuts"      Content="Nuts"      Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergyDairy"     Content="Dairy"     Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergyGluten"    Content="Gluten"    Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergyShellfish" Content="Shellfish" Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergyEggs"      Content="Eggs"      Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergySoy"       Content="Soy"       Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergyFish"      Content="Fish"      Margin="0,0,16,8"/>
+                            <CheckBox x:Name="AllergyWheat"     Content="Wheat"     Margin="0,0,16,8"/>
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <Border Grid.Row="10"
                             Background="#F9FAFB"
                             CornerRadius="10"
                             Padding="12">
@@ -233,7 +282,7 @@
                                    Foreground="#6B7280"/>
                     </Border>
 
-                    <WrapPanel Grid.Row="8" HorizontalAlignment="Right">
+                    <WrapPanel Grid.Row="12" HorizontalAlignment="Right">
                         <Button Content="Cancel"
                                 Width="110"
                                 Height="40"

@@ -52,6 +52,35 @@ namespace SmartMeal.Views
             HeightTextBox.Text = user.HeightCm.HasValue ? user.HeightCm.Value.ToString() : string.Empty;
             WeightTextBox.Text = user.WeightKg.HasValue ? user.WeightKg.Value.ToString() : string.Empty;
             SelectGenderByTag(user.Gender);
+
+            var prefs = (user.FoodPreferences ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            PrefVegetarian.IsChecked  = prefs.Contains("Vegetarian",  StringComparer.OrdinalIgnoreCase);
+            PrefVegan.IsChecked       = prefs.Contains("Vegan",        StringComparer.OrdinalIgnoreCase);
+            PrefHalal.IsChecked       = prefs.Contains("Halal",        StringComparer.OrdinalIgnoreCase);
+            PrefKeto.IsChecked        = prefs.Contains("Keto",         StringComparer.OrdinalIgnoreCase);
+            PrefHighProtein.IsChecked = prefs.Contains("High-Protein", StringComparer.OrdinalIgnoreCase);
+            PrefLowCarb.IsChecked     = prefs.Contains("Low-Carb",     StringComparer.OrdinalIgnoreCase);
+            PrefGlutenFree.IsChecked  = prefs.Contains("Gluten-Free",  StringComparer.OrdinalIgnoreCase);
+            PrefDairyFree.IsChecked   = prefs.Contains("Dairy-Free",   StringComparer.OrdinalIgnoreCase);
+
+            var allergies = (user.Allergies ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            AllergyNuts.IsChecked      = allergies.Contains("Nuts",      StringComparer.OrdinalIgnoreCase);
+            AllergyDairy.IsChecked     = allergies.Contains("Dairy",     StringComparer.OrdinalIgnoreCase);
+            AllergyGluten.IsChecked    = allergies.Contains("Gluten",    StringComparer.OrdinalIgnoreCase);
+            AllergyShellfish.IsChecked = allergies.Contains("Shellfish", StringComparer.OrdinalIgnoreCase);
+            AllergyEggs.IsChecked      = allergies.Contains("Eggs",      StringComparer.OrdinalIgnoreCase);
+            AllergySoy.IsChecked       = allergies.Contains("Soy",       StringComparer.OrdinalIgnoreCase);
+            AllergyFish.IsChecked      = allergies.Contains("Fish",      StringComparer.OrdinalIgnoreCase);
+            AllergyWheat.IsChecked     = allergies.Contains("Wheat",     StringComparer.OrdinalIgnoreCase);
+        }
+
+        private string CollectCheckedTags(params (CheckBox box, string tag)[] items)
+        {
+            return string.Join(",", items
+                .Where(x => x.box.IsChecked == true)
+                .Select(x => x.tag));
         }
 
         private async void SaveProfile_Click(object sender, RoutedEventArgs e)
@@ -78,12 +107,34 @@ namespace SmartMeal.Views
 
                 var gender = GetSelectedGenderTag();
 
+                var foodPreferences = CollectCheckedTags(
+                    (PrefVegetarian,  "Vegetarian"),
+                    (PrefVegan,       "Vegan"),
+                    (PrefHalal,       "Halal"),
+                    (PrefKeto,        "Keto"),
+                    (PrefHighProtein, "High-Protein"),
+                    (PrefLowCarb,     "Low-Carb"),
+                    (PrefGlutenFree,  "Gluten-Free"),
+                    (PrefDairyFree,   "Dairy-Free"));
+
+                var allergies = CollectCheckedTags(
+                    (AllergyNuts,      "Nuts"),
+                    (AllergyDairy,     "Dairy"),
+                    (AllergyGluten,    "Gluten"),
+                    (AllergyShellfish, "Shellfish"),
+                    (AllergyEggs,      "Eggs"),
+                    (AllergySoy,       "Soy"),
+                    (AllergyFish,      "Fish"),
+                    (AllergyWheat,     "Wheat"));
+
                 var result = await _authService.UpdateCurrentUserProfileAsync(
                     FullNameTextBox.Text,
                     age,
                     heightCm,
                     weightKg,
-                    gender);
+                    gender,
+                    foodPreferences,
+                    allergies);
 
                 if (!result.Success)
                 {
@@ -137,6 +188,11 @@ namespace SmartMeal.Views
         private void History_Click(object sender, RoutedEventArgs e)
         {
             _mainWindow.Navigate(new WeightHistoryView());
+        }
+
+        private void Recommendations_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new RecommendationsView());
         }
 
         private string GetSelectedGenderTag()

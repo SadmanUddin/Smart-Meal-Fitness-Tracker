@@ -63,5 +63,15 @@ namespace SmartMeal.core.Models
         // shown an error and their session is immediately invalidated.
         [Column("is_banned")]
         public bool IsBanned { get; set; }
+
+        // Comma-separated dietary preference tags, e.g. "Vegetarian,Keto,High-Protein".
+        // Used by GeminiService when building the meal recommendation prompt.
+        [Column("food_preferences")]
+        public string FoodPreferences { get; set; } = string.Empty;
+
+        // Comma-separated allergy tags, e.g. "Nuts,Dairy,Gluten".
+        // Used by GeminiService to exclude allergens from recommendations.
+        [Column("allergies")]
+        public string Allergies { get; set; } = string.Empty;
     }
 }
