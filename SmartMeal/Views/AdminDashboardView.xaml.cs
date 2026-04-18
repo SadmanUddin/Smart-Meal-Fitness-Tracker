@@ -8,6 +8,7 @@
 //
 // Security assumptions:
 //   - Login routing only navigates here when CurrentUser.Role == "admin"
+//     and CurrentUser.IsBanned == false
 //   - RLS policies still enforce admin access server-side
 
 using System.Windows;
@@ -46,10 +47,22 @@ namespace SmartMeal.Views
         private async Task LoadUsersAsync()
         {
             var currentUser = _authService.CurrentUser;
-            if (currentUser == null || currentUser.Role != "admin")
+            if (currentUser == null || currentUser.Role != "admin" || currentUser.IsBanned)
             {
+                if (currentUser?.IsBanned == true)
+                {
+                    try
+                    {
+                        await _authService.SignOutAsync();
+                    }
+                    catch
+                    {
+                        // If sign-out fails, still force navigation away from admin view.
+                    }
+                }
+
                 MessageBox.Show(
-                    "Admin access is required.",
+                    "Active admin access is required.",
                     "Access Denied",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
