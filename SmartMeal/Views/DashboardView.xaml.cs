@@ -164,6 +164,11 @@ namespace SmartMeal.Views
                 dailyGoal = goal.CalorieGoal.Value;
             CaloriesGoalBlock.Text = Math.Round(dailyGoal).ToString();
 
+            if (goal?.TargetWeightKg.HasValue == true)
+                TargetWeightGoalBlock.Text = $"Target weight: {goal.TargetWeightKg.Value:F1} kg";
+            else
+                TargetWeightGoalBlock.Text = "";
+
             // Balance = goal − consumed + burned
             // Positive: user has calories remaining for the day.
             // Negative: user has exceeded their goal (before exercise credit).

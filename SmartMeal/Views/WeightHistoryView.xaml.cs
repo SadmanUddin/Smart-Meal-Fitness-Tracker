@@ -27,6 +27,7 @@ namespace SmartMeal.Views
     {
         private readonly MainWindow _mainWindow;
         private readonly WeightLogService _weightLogService;
+        private readonly GoalService _goalService;
         private readonly AuthService _authService;
 
         // All logs loaded from the DB, sorted oldest-first (for correct chart direction).
@@ -38,11 +39,15 @@ namespace SmartMeal.Views
         // 0 means "all time"; any other value is a day count cutoff from now.
         private int _filterDays = 0;
 
+        // Null when the user has not set a weight goal yet.
+        private decimal? _targetWeight = null;
+
         public WeightHistoryView()
         {
             InitializeComponent();
             _mainWindow = (MainWindow)Application.Current.MainWindow;
             _weightLogService = _mainWindow.WeightLogService;
+            _goalService = _mainWindow.GoalService;
             _authService = _mainWindow.AuthService;
             Loaded += WeightHistoryView_Loaded;
         }
@@ -55,7 +60,7 @@ namespace SmartMeal.Views
             await LoadWeightLogsAsync();
         }
 
-        // Fetches all weight logs for the current user from Supabase, then triggers a redraw.
+        // Fetches weight logs and the user's goal in parallel, then triggers a redraw.
         // GetWeightLogsByUserAsync returns rows in DESC order (newest first), so we reverse
         // them here to get oldest-first, which is the correct direction for a time-series graph.
         private async Task LoadWeightLogsAsync()
@@ -65,8 +70,14 @@ namespace SmartMeal.Views
 
             try
             {
-                var logs = await _weightLogService.GetWeightLogsByUserAsync(userId);
-                _allLogs = logs.OrderBy(l => l.LoggedAt).ToList();
+                var logsTask = _weightLogService.GetWeightLogsByUserAsync(userId);
+                var goalTask = _goalService.GetGoalAsync(userId);
+                await Task.WhenAll(logsTask, goalTask);
+
+                _allLogs = logsTask.Result.OrderBy(l => l.LoggedAt).ToList();
+                _targetWeight = goalTask.Result?.TargetWeightKg;
+
+                UpdateTargetWeightLabel();
                 ApplyFilter();
                 UpdateLatestWeightLabel();
             }
@@ -78,6 +89,14 @@ namespace SmartMeal.Views
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+        }
+
+        // Updates the "Target Weight" stat card in the header.
+        private void UpdateTargetWeightLabel()
+        {
+            TargetWeightBlock.Text = _targetWeight.HasValue
+                ? $"{_targetWeight.Value:F1} kg"
+                : "—";
         }
 
         // Slices _allLogs based on the selected time filter and redraws the chart.
@@ -241,6 +260,15 @@ namespace SmartMeal.Views
             // --- Value ranges ---
             double minW = (double)logs.Min(l => l.WeightKg);
             double maxW = (double)logs.Max(l => l.WeightKg);
+
+            // Extend the range to include the target weight so the dashed line is always visible.
+            if (_targetWeight.HasValue)
+            {
+                double tw = (double)_targetWeight.Value;
+                minW = Math.Min(minW, tw);
+                maxW = Math.Max(maxW, tw);
+            }
+
             double range = maxW - minW;
             if (range < 2) range = 2; // minimum range so a single data point isn't at the canvas edge
 
@@ -330,6 +358,34 @@ namespace SmartMeal.Views
                     Fill = new SolidColorBrush(Color.FromArgb(25, 37, 99, 235)), // very translucent blue
                     Stroke = Brushes.Transparent
                 });
+            }
+
+            // --- Target weight dashed line (amber) ---
+            if (_targetWeight.HasValue)
+            {
+                double ty = ToY((double)_targetWeight.Value);
+                var targetLine = new Line
+                {
+                    X1 = padL,
+                    Y1 = ty,
+                    X2 = padL + chartW,
+                    Y2 = ty,
+                    Stroke = new SolidColorBrush(Color.FromRgb(245, 158, 11)), // amber
+                    StrokeThickness = 1.8,
+                    StrokeDashArray = new DoubleCollection { 6, 4 }
+                };
+                WeightChartCanvas.Children.Add(targetLine);
+
+                var targetLabel = new TextBlock
+                {
+                    Text = $"Target {_targetWeight.Value:F1} kg",
+                    FontSize = 10,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = new SolidColorBrush(Color.FromRgb(245, 158, 11))
+                };
+                Canvas.SetLeft(targetLabel, padL + 4);
+                Canvas.SetTop(targetLabel, ty - 16);
+                WeightChartCanvas.Children.Add(targetLabel);
             }
 
             // --- Line ---

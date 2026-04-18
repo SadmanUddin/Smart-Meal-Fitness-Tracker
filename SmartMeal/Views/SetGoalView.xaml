@@ -114,6 +114,20 @@
                              Padding="10"
                              FontSize="14"/>
 
+                    <TextBlock Text="Target Weight (kg)"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="#374151"/>
+                    <TextBox x:Name="TargetWeightTextBox"
+                             Height="42"
+                             Margin="0,10,0,8"
+                             Padding="10"
+                             FontSize="14"/>
+                    <TextBlock Text="Optional. Shown on your weight history chart as a target line."
+                               FontSize="12"
+                               Foreground="#9CA3AF"
+                               Margin="0,0,0,24"/>
+
                     <WrapPanel HorizontalAlignment="Right">
                         <Button Content="Cancel"
                                 Width="110"
