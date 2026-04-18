@@ -169,6 +169,33 @@ namespace SmartMeal.Views
             else
                 TargetWeightGoalBlock.Text = "";
 
+            // --- BMI ---
+            // Uses profile weight and height from CurrentUser (set at registration / updated in ProfileView).
+            // BMI = kg / m^2. Shown as "—" when either value is missing.
+            var currentUser = _authService.CurrentUser;
+            if (currentUser?.WeightKg > 0 && currentUser?.HeightCm > 0)
+            {
+                double heightM = (double)currentUser.HeightCm!.Value / 100.0;
+                double bmi = (double)currentUser.WeightKg!.Value / (heightM * heightM);
+                BmiValueBlock.Text = bmi.ToString("F1");
+                (BmiCategoryBlock.Text, BmiValueBlock.Foreground) = bmi switch
+                {
+                    < 18.5 => ("Underweight", new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(245, 158, 11))),  // amber
+                    < 25.0 => ("Normal weight", new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(16, 185, 129))),  // green
+                    < 30.0 => ("Overweight", new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(245, 158, 11))),  // amber
+                    _      => ("Obese", new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(239, 68, 68)))    // red
+                };
+            }
+            else
+            {
+                BmiValueBlock.Text = "—";
+                BmiCategoryBlock.Text = "Set height & weight in Profile";
+            }
+
             // Balance = goal − consumed + burned
             // Positive: user has calories remaining for the day.
             // Negative: user has exceeded their goal (before exercise credit).
