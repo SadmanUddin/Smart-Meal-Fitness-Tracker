@@ -161,8 +161,28 @@
                 </Grid>
             </Border>
 
-            <!-- Summary Cards -->
+            <!-- Summary Cards: Meals → Consumed → Activities → Burned → Balance → BMI -->
             <UniformGrid Grid.Row="4" Columns="6" Margin="0">
+
+                <!-- 1. Meals logged today -->
+                <Border Background="White"
+                        CornerRadius="16"
+                        Margin="0,0,16,0"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Meals Today"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="MealsCountBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 2. Calories consumed from those meals (with goal progress) -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -193,23 +213,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Background="White"
-                        CornerRadius="16"
-                        Margin="0,0,16,0"
-                        Padding="18">
-                    <StackPanel>
-                        <TextBlock Text="Meals"
-                                   FontSize="13"
-                                   Foreground="#6B7280"/>
-                        <TextBlock x:Name="MealsCountBlock"
-                                   Text="0"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   Foreground="#111827"
-                                   Margin="0,10,0,0"/>
-                    </StackPanel>
-                </Border>
-
+                <!-- 3. Activities logged -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -227,6 +231,7 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 4. Calories burned from those activities -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -244,6 +249,7 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 5. Net balance = goal − consumed + burned -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -258,9 +264,15 @@
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="0,10,0,0"/>
+                        <TextBlock Text="goal − consumed + burned"
+                                   FontSize="10"
+                                   Foreground="#9CA3AF"
+                                   Margin="0,4,0,0"
+                                   TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
+                <!-- 6. BMI — body metric, not a daily figure -->
                 <Border Background="White"
                         CornerRadius="16"
                         Padding="18">
