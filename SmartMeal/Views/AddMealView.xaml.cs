@@ -1,19 +1,19 @@
 // AddMealView is the form where the user logs a new meal entry.
 //
-// The user picks:
-//   1. A food item from a dropdown (e.g. Chicken Breast, Rice, Banana)
-//   2. A meal type (Breakfast, Lunch, Dinner, Snack)
-//   3. How many grams they ate
+// The user:
+//   1. Types a food name into the search box — USDA FoodData Central is queried
+//      after a 400ms debounce, returning up to 20 matching foods.
+//   2. Clicks a result to select it (shown as a chip below the search box).
+//   3. Enters how many grams they ate.
+//   4. Picks a meal type (Breakfast, Lunch, Dinner, Snack).
 //
-// On submit, a row is inserted into the meal_logs table in Supabase.
-// On success, the user is returned to the Dashboard where the new meal appears in the stats.
-//
-// Both dropdowns are populated from the database when the view loads.
-// If the DB call fails, the user is sent back to the Dashboard with an error message
-// rather than being left on a half-loaded form.
+// On submit, the selected USDA food is upserted into food_items (insert if new,
+// reuse if already cached) and a row is inserted into meal_logs.
+// On success, the user is returned to the Dashboard where the new meal appears.
 
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using SmartMeal.Helpers;
 using SmartMeal.core.Models;
 using SmartMeal.core.Services;
@@ -25,12 +25,16 @@ namespace SmartMeal.Views
         private readonly MainWindow _mainWindow;
         private readonly MealService _mealService;
         private readonly FoodService _foodService;
+        private readonly FoodSearchService _foodSearchService;
         private readonly AuthService _authService;
 
-        // Cached dropdown data — loaded once from the DB when the view opens.
-        // Stored as fields so AddMeal_Click can read the selected items' IDs.
-        private List<FoodItem> _foods = new();
         private List<MealType> _mealTypes = new();
+
+        // The food the user picked from the search results.
+        private FoodSearchResult? _selectedFood;
+
+        // Debounce timer — fires the API call 400ms after the user stops typing.
+        private readonly DispatcherTimer _searchDebounce;
 
         public AddMealView()
         {
@@ -43,27 +47,26 @@ namespace SmartMeal.Views
             _mainWindow = mainWindow;
             _mealService = _mainWindow.MealService;
             _foodService = _mainWindow.FoodService;
+            _foodSearchService = _mainWindow.FoodSearchService;
             _authService = _mainWindow.AuthService;
 
-            // Dropdown data requires async DB calls, so defer to the Loaded event.
+            _searchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+            _searchDebounce.Tick += SearchDebounce_Tick;
+
             Loaded += AddMealView_Loaded;
         }
 
-        // Fires once when the view appears. Immediately unsubscribes to prevent double-loading.
         private async void AddMealView_Loaded(object sender, RoutedEventArgs e)
         {
             Loaded -= AddMealView_Loaded;
-
             try
             {
-                await LoadDropdownsAsync();
+                await LoadMealTypesAsync();
             }
             catch (Exception ex)
             {
-                // If we can't load foods or meal types, the form is unusable.
-                // Show the error and go back to the dashboard instead of leaving the user stuck.
                 MessageBox.Show(
-                    $"Could not load meal options: {ex.Message}",
+                    $"Could not load meal types: {ex.Message}",
                     "Load Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -71,31 +74,93 @@ namespace SmartMeal.Views
             }
         }
 
-        // Fetches both dropdown lists from the DB in sequence and binds them to the ComboBoxes.
-        // DisplayMemberPath tells WPF which property on each list item to show as the label.
-        private async Task LoadDropdownsAsync()
+        private async Task LoadMealTypesAsync()
         {
-            // GetPublicFoodsAsync returns all active, public food items sorted A–Z.
-            // These are the ~44 seeded foods available to all users.
-            _foods = await _foodService.GetPublicFoodsAsync();
-            FoodComboBox.ItemsSource = _foods;
-            FoodComboBox.DisplayMemberPath = "Name";
-
-            // GetMealTypesAsync returns Breakfast, Lunch, Dinner, Snack in display order.
             _mealTypes = await _foodService.GetMealTypesAsync();
             MealTypeComboBox.ItemsSource = _mealTypes;
             MealTypeComboBox.DisplayMemberPath = "Name";
         }
 
-        // Fires when the user clicks "Add Meal".
-        // Validates all three inputs, then inserts a row into meal_logs via MealService.
+        // --- Food search ---
+
+        // Fires on every keystroke. Resets selection, stops any pending search,
+        // and restarts the debounce timer if the query is long enough.
+        private void FoodSearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _selectedFood = null;
+            SelectedFoodBorder.Visibility = Visibility.Collapsed;
+            FoodResultsBorder.Visibility = Visibility.Collapsed;
+            _searchDebounce.Stop();
+
+            if (FoodSearchTextBox.Text.Trim().Length < 2)
+                return;
+
+            SearchingLabel.Visibility = Visibility.Visible;
+            _searchDebounce.Start();
+        }
+
+        private async void SearchDebounce_Tick(object? sender, EventArgs e)
+        {
+            _searchDebounce.Stop();
+            await RunSearchAsync(FoodSearchTextBox.Text.Trim());
+        }
+
+        private async Task RunSearchAsync(string query)
+        {
+            SearchingLabel.Visibility = Visibility.Collapsed;
+            if (string.IsNullOrWhiteSpace(query)) return;
+
+            try
+            {
+                var results = await _foodSearchService.SearchAsync(query);
+                FoodResultsListBox.ItemsSource = results;
+                FoodResultsBorder.Visibility = results.Count > 0
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                FoodResultsBorder.Visibility = Visibility.Collapsed;
+                MessageBox.Show(
+                    $"Food search failed: {ex.Message}",
+                    "Search Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
+        // Fires when the user clicks a result in the list.
+        private void FoodResultsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FoodResultsListBox.SelectedItem is not FoodSearchResult result) return;
+
+            _selectedFood = result;
+            FoodResultsBorder.Visibility = Visibility.Collapsed;
+            FoodSearchTextBox.Text = string.Empty;
+
+            SelectedFoodLabel.Text = $"{result.Name} — {result.CaloriesPer100g:F0} kcal per 100g";
+            SelectedFoodBorder.Visibility = Visibility.Visible;
+
+            FoodResultsListBox.SelectedItem = null;
+        }
+
+        private void ClearSelectedFood_Click(object sender, RoutedEventArgs e)
+        {
+            _selectedFood = null;
+            SelectedFoodBorder.Visibility = Visibility.Collapsed;
+            FoodSearchTextBox.Text = string.Empty;
+            FoodSearchTextBox.Focus();
+        }
+
+        // --- Save ---
+
+        // Validates all inputs, upserts the USDA food into food_items to get a stable
+        // food_id FK, then inserts the meal_log row.
         private async void AddMeal_Click(object sender, RoutedEventArgs e)
         {
-            // Pattern-matching cast: "is not FoodItem food" both checks and extracts the selected value.
-            // If nothing is selected, SelectedItem is null and this cast fails, showing the message.
-            if (FoodComboBox.SelectedItem is not FoodItem food)
+            if (_selectedFood == null)
             {
-                MessageBox.Show("Please select a food item.");
+                MessageBox.Show("Please search and select a food item.");
                 return;
             }
             if (MealTypeComboBox.SelectedItem is not MealType mealType)
@@ -103,7 +168,6 @@ namespace SmartMeal.Views
                 MessageBox.Show("Please select a meal type.");
                 return;
             }
-            // decimal.TryParse handles both "150" and "150.5". We reject 0 or negative grams.
             if (!decimal.TryParse(GramsTextBox.Text, out decimal grams) || grams <= 0)
             {
                 MessageBox.Show("Please enter a valid amount of grams.");
@@ -112,7 +176,6 @@ namespace SmartMeal.Views
 
             if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
-                // Session expired (CurrentUser was cleared) — send back to login.
                 MessageBox.Show("Session expired. Please log in again.");
                 _mainWindow.Navigate(new LoginView());
                 return;
@@ -120,10 +183,10 @@ namespace SmartMeal.Views
 
             try
             {
-                // AddMealLogAsync inserts a row into meal_logs with today's date as log_date.
-                // Arguments: the user's Supabase Auth UUID, the selected food's PK,
-                // the grams amount, and the selected meal type's PK.
-                await _mealService.AddMealLogAsync(userId, food.FoodId, grams, mealType.MealTypeId);
+                // Cache the USDA food in food_items so the FK in meal_logs is valid
+                // and calorie calculations on the dashboard continue to work.
+                var foodItem = await _foodService.UpsertSearchedFoodAsync(_selectedFood, userId);
+                await _mealService.AddMealLogAsync(userId, foodItem.FoodId, grams, mealType.MealTypeId);
                 MessageBox.Show("Meal logged successfully!");
                 _mainWindow.Navigate(new DashboardView());
             }
@@ -137,39 +200,22 @@ namespace SmartMeal.Views
             }
         }
 
-        // Discard the form and go back to the Dashboard without saving.
-        private void Cancel_Click(object sender, RoutedEventArgs e)
-        {
+        private void Cancel_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new DashboardView());
-        }
 
-        // Sidebar / bottom navigation links — shared across views for consistent navigation.
-        private void Dashboard_Click(object sender, RoutedEventArgs e)
-        {
+        private void Dashboard_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new DashboardView());
-        }
 
-        private void Meals_Click(object sender, RoutedEventArgs e)
-        {
+        private void Meals_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new MealsView());
-        }
 
-        private void Activities_Click(object sender, RoutedEventArgs e)
-        {
+        private void Activities_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new AddActivityView());
-        }
 
-        // Navigate to WeightHistoryView to see the weight graph and log a new weigh-in.
-        private void History_Click(object sender, RoutedEventArgs e)
-        {
+        private void History_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new WeightHistoryView());
-        }
 
-        // Navigate to ProfileView to edit user details.
-        private void Profile_Click(object sender, RoutedEventArgs e)
-        {
+        private void Profile_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new ProfileView());
-        }
-
     }
 }

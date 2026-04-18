@@ -70,7 +70,7 @@ namespace SmartMeal.Views
                 var logs = await _mealService.GetAllLogsAsync(userId);
 
                 // Fetch the lookup tables in parallel to avoid sequential round-trips.
-                var foodsTask = _foodService.GetPublicFoodsAsync();
+                var foodsTask = _foodService.GetAccessibleFoodsAsync(userId);
                 var mealTypesTask = _foodService.GetMealTypesAsync();
                 await Task.WhenAll(foodsTask, mealTypesTask);
 
