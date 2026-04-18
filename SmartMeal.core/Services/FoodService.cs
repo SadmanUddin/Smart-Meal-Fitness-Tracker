@@ -45,5 +45,53 @@ namespace SmartMeal.core.Services
                 .Get();
             return result.Models;
         }
+
+        // Returns all foods visible to the given user: public seeded foods + the user's own
+        // private USDA-sourced foods. Two parallel queries are used because PostgREST OR
+        // filters are cumbersome with the C# SDK, and both lists are small.
+        public async Task<List<FoodItem>> GetAccessibleFoodsAsync(string userId)
+        {
+            var publicTask = _client.From<FoodItem>()
+                .Where(f => f.IsPublic == true && f.IsActive == true)
+                .Get();
+            var privateTask = _client.From<FoodItem>()
+                .Where(f => f.CreatedByUserId == userId && f.IsActive == true)
+                .Get();
+            await Task.WhenAll(publicTask, privateTask);
+
+            return publicTask.Result.Models
+                .Concat(privateTask.Result.Models)
+                .OrderBy(f => f.Name)
+                .ToList();
+        }
+
+        // Finds an existing food_items row for a USDA search result (by name) or inserts a
+        // new private row for the user. This caches the USDA food locally so the FK in
+        // meal_logs always points to a real food_items row, and calorie lookups continue to work.
+        public async Task<FoodItem> UpsertSearchedFoodAsync(FoodSearchResult result, string userId)
+        {
+            // Reuse any existing food with the same name — public seeded or previously cached.
+            var check = await _client.From<FoodItem>()
+                .Where(f => f.Name == result.Name && f.IsActive == true)
+                .Get();
+
+            if (check.Models.FirstOrDefault() is { } existing)
+                return existing;
+
+            var inserted = await _client.From<FoodItem>().Insert(new FoodItem
+            {
+                Name = result.Name,
+                CaloriesPer100g = result.CaloriesPer100g,
+                ProteinPer100g = result.ProteinPer100g,
+                CarbsPer100g = result.CarbsPer100g,
+                FatsPer100g = result.FatsPer100g,
+                IsPublic = false,
+                IsActive = true,
+                CreatedByUserId = userId,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            return inserted.Models.First();
+        }
     }
 }

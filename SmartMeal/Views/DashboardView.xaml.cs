@@ -103,9 +103,9 @@ namespace SmartMeal.Views
             var logs = await _mealService.GetTodayLogsAsync(userId);
             MealsCountBlock.Text = logs.Count.ToString();
 
-            // Fetch foods once and reuse for both calorie math and latest-meal label.
-            // This avoids two DB round-trips on every dashboard load.
-            var foods = await _foodService.GetPublicFoodsAsync();
+            // Fetch all foods accessible to this user (public seeded + their own USDA-cached foods)
+            // so calorie calculations work for meals logged via the USDA search.
+            var foods = await _foodService.GetAccessibleFoodsAsync(userId);
             var foodById = foods.ToDictionary(f => f.FoodId);
 
             decimal totalCaloriesConsumed = 0m;

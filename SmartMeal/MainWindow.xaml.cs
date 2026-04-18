@@ -38,6 +38,7 @@ namespace SmartMeal
         // but it lives here so AdminDashboardView can pull it out the same way
         // all other views pull their services.
         public AdminService AdminService { get; private set; } = null!;
+        public FoodSearchService FoodSearchService { get; private set; } = null!;
 
         public MainWindow()
         {
@@ -93,6 +94,7 @@ namespace SmartMeal
             WeightLogService = new WeightLogService(provider.Client);
             ActService = new ActService(provider.Client);
             AdminService = new AdminService(provider.Client);
+            FoodSearchService = new FoodSearchService(config.UsdaApiKey);
 
             // Show the registration screen first. New users register, existing users
             // navigate to login from the link at the bottom of the register form.
@@ -170,6 +172,10 @@ namespace SmartMeal
 
         // A lightweight record just for deserialising supabase.config.json.
         // The property names here must exactly match the JSON keys in the file.
-        private record SupabaseConfig(string SupabaseUrl, string SupabaseAnonKey, string? SupabaseEmailRedirectUrl = null);
+        private record SupabaseConfig(
+            string SupabaseUrl,
+            string SupabaseAnonKey,
+            string? SupabaseEmailRedirectUrl = null,
+            string? UsdaApiKey = null);
     }
 }

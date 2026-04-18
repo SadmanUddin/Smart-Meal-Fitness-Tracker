@@ -24,10 +24,10 @@ namespace SmartMeal.core.Models
         public string Name { get; set; } = string.Empty;
 
         // Links this food to a category (e.g. 1 = Protein, 2 = Carbs).
-        // The food_categories table has the names, but we have no FoodCategory model yet,
-        // so category names cannot be displayed — only the number is available.
+        // Nullable: USDA-sourced foods inserted by users don't have a matching local category,
+        // so we store null for them. The category name is not displayed anywhere in the UI yet.
         [Column("food_category_id")]
-        public short FoodCategoryId { get; set; }
+        public short? FoodCategoryId { get; set; }
 
         // All nutrition values are per 100g of this food.
         // To get the actual value for a serving: (grams / 100) * value_per_100g.
@@ -52,10 +52,10 @@ namespace SmartMeal.core.Models
         [Column("is_active")]
         public bool IsActive { get; set; }
 
-        // NOTE: The database also has a created_by_user_id column (for user-created private
-        // foods) but this model does not map it yet. The DB constraint says:
-        // public foods must have created_by_user_id = NULL, private foods must have it set.
-        // Since the app only reads public foods right now, this missing mapping causes no issues.
+        // Set when a user adds a food from the USDA search; null for seeded public foods.
+        // DB constraint: public foods must have this NULL; private foods must have it set.
+        [Column("created_by_user_id")]
+        public string? CreatedByUserId { get; set; }
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
