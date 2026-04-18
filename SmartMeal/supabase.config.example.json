@@ -2,5 +2,6 @@
   "SupabaseUrl": "YOUR_SUPABASE_PROJECT_URL",
   "SupabaseAnonKey": "YOUR_SUPABASE_ANON_KEY",
   "SupabaseEmailRedirectUrl": "",
-  "UsdaApiKey": "YOUR_USDA_API_KEY"
+  "UsdaApiKey": "YOUR_USDA_API_KEY",
+  "GeminiApiKey": "YOUR_GEMINI_API_KEY"
 }
