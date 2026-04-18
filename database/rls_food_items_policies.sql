@@ -13,6 +13,7 @@
 ALTER TABLE public.food_items ENABLE ROW LEVEL SECURITY;
 
 -- Allow all authenticated users to read public foods (seeded data).
+DROP POLICY IF EXISTS "food_items_select_public" ON public.food_items;
 CREATE POLICY "food_items_select_public"
     ON public.food_items
     FOR SELECT
@@ -20,6 +21,7 @@ CREATE POLICY "food_items_select_public"
     USING (is_public = true);
 
 -- Allow users to read their own private foods (USDA-sourced, cached by the app).
+DROP POLICY IF EXISTS "food_items_select_own_private" ON public.food_items;
 CREATE POLICY "food_items_select_own_private"
     ON public.food_items
     FOR SELECT
@@ -29,6 +31,7 @@ CREATE POLICY "food_items_select_own_private"
 -- Allow users to insert their own private foods.
 -- The CHECK constraint prevents inserting public foods via the API
 -- (seeded foods are inserted via service-role key or direct DB access only).
+DROP POLICY IF EXISTS "food_items_insert_own" ON public.food_items;
 CREATE POLICY "food_items_insert_own"
     ON public.food_items
     FOR INSERT
