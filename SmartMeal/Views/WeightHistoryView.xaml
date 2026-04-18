@@ -81,7 +81,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Header row: title on left, latest weight stat on right -->
+            <!-- Header row: title on left, stat cards on right -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -99,28 +99,52 @@
                                Margin="0,6,0,0"/>
                 </StackPanel>
 
-                <!-- Latest weight card -->
-                <Border Grid.Column="1"
-                        Background="White"
-                        CornerRadius="12"
-                        Padding="18,12"
-                        VerticalAlignment="Center">
-                    <StackPanel>
-                        <TextBlock Text="Latest Weight"
-                                   FontSize="12"
-                                   Foreground="#6B7280"/>
-                        <TextBlock x:Name="LatestWeightBlock"
-                                   Text="—"
-                                   FontSize="26"
-                                   FontWeight="Bold"
-                                   Foreground="#111827"
-                                   Margin="0,4,0,2"/>
-                        <TextBlock x:Name="LatestWeightDateBlock"
-                                   Text=""
-                                   FontSize="11"
-                                   Foreground="#9CA3AF"/>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+
+                    <!-- Target weight card -->
+                    <Border Background="White"
+                            CornerRadius="12"
+                            Padding="18,12"
+                            Margin="0,0,12,0">
+                        <StackPanel>
+                            <TextBlock Text="Target Weight"
+                                       FontSize="12"
+                                       Foreground="#6B7280"/>
+                            <TextBlock x:Name="TargetWeightBlock"
+                                       Text="—"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Foreground="#F59E0B"
+                                       Margin="0,4,0,2"/>
+                            <TextBlock Text="goal"
+                                       FontSize="11"
+                                       Foreground="#9CA3AF"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Latest weight card -->
+                    <Border Background="White"
+                            CornerRadius="12"
+                            Padding="18,12">
+                        <StackPanel>
+                            <TextBlock Text="Latest Weight"
+                                       FontSize="12"
+                                       Foreground="#6B7280"/>
+                            <TextBlock x:Name="LatestWeightBlock"
+                                       Text="—"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Foreground="#111827"
+                                       Margin="0,4,0,2"/>
+                            <TextBlock x:Name="LatestWeightDateBlock"
+                                       Text=""
+                                       FontSize="11"
+                                       Foreground="#9CA3AF"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
 
             <!-- Log Weight panel -->

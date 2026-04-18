@@ -27,39 +27,70 @@ namespace SmartMeal.Views
         public SetGoalView()
         {
             InitializeComponent();
-            // No async setup needed — the form has a single text field and a save button.
             _mainWindow = (MainWindow)Application.Current.MainWindow;
             _goalService = _mainWindow.GoalService;
             _authService = _mainWindow.AuthService;
+            Loaded += SetGoalView_Loaded;
         }
 
-        // Fires when the user clicks "Set Goal".
-        // Validates the input, then upserts the calorie goal via GoalService.
+        // Pre-populate both fields from the user's existing goal row so they see
+        // their current values before making changes.
+        private async void SetGoalView_Loaded(object sender, RoutedEventArgs e)
+        {
+            Loaded -= SetGoalView_Loaded;
+
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
+                return;
+
+            try
+            {
+                var existing = await _goalService.GetGoalAsync(userId);
+                if (existing == null) return;
+
+                if (existing.CalorieGoal.HasValue)
+                    DailyGoalTextBox.Text = existing.CalorieGoal.Value.ToString();
+
+                if (existing.TargetWeightKg.HasValue)
+                    TargetWeightTextBox.Text = existing.TargetWeightKg.Value.ToString("F1");
+            }
+            catch
+            {
+                // Pre-population failing silently is acceptable; user can still type new values.
+            }
+        }
+
+        // Fires when the user clicks "Save Goal".
+        // Validates calorie input (required), parses optional target weight, then upserts via GoalService.
         private async void SetGoal_Click(object sender, RoutedEventArgs e)
         {
-            // int.TryParse safely converts the text to an integer without throwing.
-            // We reject 0 or negative values — a goal of zero calories makes no sense.
             if (!int.TryParse(DailyGoalTextBox.Text, out int calorieGoal) || calorieGoal <= 0)
             {
                 MessageBox.Show("Please enter a valid number for calorie goal.");
                 return;
             }
 
+            decimal? targetWeightKg = null;
+            var targetText = TargetWeightTextBox.Text.Trim();
+            if (!string.IsNullOrEmpty(targetText))
+            {
+                if (!decimal.TryParse(targetText, out decimal tw) || tw <= 0)
+                {
+                    MessageBox.Show("Please enter a valid target weight in kg, or leave it blank.");
+                    return;
+                }
+                targetWeightKg = tw;
+            }
+
             if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
-                // Defensive check — shouldn't happen in normal flow since the user must
-                // be logged in to reach this view.
                 MessageBox.Show("No user logged in.");
                 return;
             }
 
             try
             {
-                // UpsertGoalAsync checks whether a goal row already exists for this user.
-                // If it does, it updates the CalorieGoal column. If not, it inserts a new row.
-                // Either way, the result in the DB is exactly one goal row for this user.
-                await _goalService.UpsertGoalAsync(userId, calorieGoal);
-                MessageBox.Show("Goal set successfully!");
+                await _goalService.UpsertGoalAsync(userId, calorieGoal, targetWeightKg);
+                MessageBox.Show("Goal saved successfully!");
                 _mainWindow.Navigate(new DashboardView());
             }
             catch (Exception ex)

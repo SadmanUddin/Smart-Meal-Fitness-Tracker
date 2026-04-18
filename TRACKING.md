@@ -2,7 +2,7 @@
 
 > **Purpose:** This file is maintained after every significant change to give any developer a clear, up-to-date picture of what the app does, how it is structured, what has been done, and what still needs to be done.
 >
-> **Last updated:** 2026-04-18 (Session 8)
+> **Last updated:** 2026-04-18 (Session 9)
 
 ---
 
@@ -244,7 +244,7 @@ Seeded with 44 public food items.
 - `GetMealTypesAsync()` — returns all meal types ordered by `display_order`
 
 ### `GoalService` — `SmartMeal.core/Services/GoalService.cs`
-- `UpsertGoalAsync(userId, calorieGoal)` — inserts or updates the user's goal row in `goals`
+- `UpsertGoalAsync(userId, calorieGoal, targetWeightKg?)` — inserts or updates the user's goal row in `goals`; `targetWeightKg` is optional (omitting it clears the value)
 - `GetGoalAsync(userId)` — returns the user's `Goal` or `null` if none set
 - **Backed by Supabase** — goals persist across sessions
 
@@ -668,7 +668,7 @@ Understanding which data survives a restart is critical for knowing what feature
 | Activities | Yes | Yes | `activities` |
 | Weight logs | Yes | Yes | `weight_logs` — WeightHistoryView (log + graph) |
 | Protein/carbs/fat goals | Yes (columns exist) | Yes | `goals` — no UI |
-| Target weight goal | Yes (column exists) | Yes | `goals` — no UI |
+| Target weight goal | Yes | Yes | `goals` — collected in `SetGoalView`, shown in dashboard and weight chart |
 | User profile (age, height, gender) | Yes (columns exist) | Yes | `users` — editable in `ProfileView` |
 
 ---
@@ -858,7 +858,7 @@ Confirmed the full configuration chain is intact and ready to use:
 |---|---|---|
 | Activity history UI | Partial | Activities are persisted, but there is no dedicated full history/manage screen (only add + dashboard summary/recent). |
 | ~~Weight logging UI~~ | ~~Missing~~ | Implemented in Session 4 — `WeightHistoryView` with line graph and log form. |
-| Full goal editing | Partial | Only `calorie_goal` is collected. `protein_goal`, `carbs_goal`, `fat_goal`, `target_weight_kg` columns in `goals` table are unused. |
+| Full goal editing | Partial | `calorie_goal` and `target_weight_kg` are now collected. `protein_goal`, `carbs_goal`, `fat_goal` columns in `goals` table remain unused. |
 | ~~User profile editing (post-registration)~~ | ~~Partial~~ | Implemented in Session 6 — `ProfileView` saves to `public.users` via `AuthService.UpdateCurrentUserProfileAsync`. |
 | Calorie detail UX | Partial | Dashboard shows total calories consumed, but no per-meal calorie breakdown. |
 | Food category display | Missing | No `FoodCategory` C# model. Category names not shown anywhere. |
@@ -1126,8 +1126,8 @@ No in-app UI for role promotion (by design — admin access is granted out-of-ba
 
 - Fixed: `UpdateCurrentUserProfileAsync` no longer mutates `CurrentUser` before DB write.
 - Fixed: profile save now writes first, then updates in-memory session state.
-- Fixed: `RegisterButton_Click` now has top-level `try/catch`.
-- Fixed: `ProfileView.SaveProfile_Click` now has top-level `try/catch`.
+- Fixed: `RegisterButton_Click` now has `try/catch`.
+- Fixed: `ProfileView.SaveProfile_Click` now has `try/catch`.
 - Fixed: admin total-count methods use server-side count (`Count(CountType.Exact)`) instead of loading all rows.
 - Fixed: stale admin RLS comment updated to current policy style (`is_current_user_admin()`).
 - Fixed: SetGoal sidebar now includes History and Profile buttons (with handlers).
@@ -1155,6 +1155,45 @@ No in-app UI for role promotion (by design — admin access is granted out-of-ba
 
 - `dotnet build SmartMeal/SmartMeal.csproj -p:EnableWindowsTargeting=true -m:1` passed.
 - `dotnet test SmartMealSolution/SmartMealSolution.sln -p:EnableWindowsTargeting=true -m:1` passed.
+
+---
+
+### Session 9 — 2026-04-18
+**Who:** Developer
+**Branch:** `feature/supabase-ui-sync`
+
+#### A. Weight goal feature — end-to-end implementation
+
+The `target_weight_kg` column in the `goals` table was previously mapped in the model but never written to or read from anywhere in the UI. This session wires it up fully across 6 files.
+
+**`SmartMeal.core/Services/GoalService.cs`** (already updated in Session 8 partial work):
+- `UpsertGoalAsync` extended with optional `decimal? targetWeightKg` parameter.
+- Both INSERT and UPDATE branches now include `TargetWeightKg`.
+
+**`SmartMeal/Views/SetGoalView.xaml`:**
+- Added "Target Weight (kg)" TextBox below the calorie goal input.
+- Added helper text: "Optional. Shown on your weight history chart as a target line."
+
+**`SmartMeal/Views/SetGoalView.xaml.cs`:**
+- Added `Loaded` event to pre-populate both fields from the user's existing goal row.
+- `SetGoal_Click` now reads `TargetWeightTextBox.Text`, parses it as `decimal?` (blank = null, invalid non-blank = validation error), and passes it to `UpsertGoalAsync`.
+
+**`SmartMeal/Views/DashboardView.xaml`:**
+- Added `TargetWeightGoalBlock` TextBlock inside the goal card, below `CaloriesGoalBlock`.
+
+**`SmartMeal/Views/DashboardView.xaml.cs`:**
+- `LoadDashboardAsync` now populates `TargetWeightGoalBlock` from `goal.TargetWeightKg` (e.g. `"Target weight: 75.0 kg"`). Blank when no target is set.
+
+**`SmartMeal/Views/WeightHistoryView.xaml`:**
+- Added a "Target Weight" stat card (amber, label "goal") in the header alongside the existing "Latest Weight" card.
+
+**`SmartMeal/Views/WeightHistoryView.xaml.cs`:**
+- Added `_goalService` field; initialized from `_mainWindow.GoalService`.
+- Added `decimal? _targetWeight` field.
+- `LoadWeightLogsAsync` now fetches weight logs and goal in parallel (`Task.WhenAll`).
+- Added `UpdateTargetWeightLabel()` to populate the amber stat card.
+- `DrawChart` extended Y-axis range to include the target weight so the dashed line is never clipped.
+- Dashed amber line drawn at `_targetWeight` Y-position with a label ("Target X.X kg") when target is set.
 
 ---
 

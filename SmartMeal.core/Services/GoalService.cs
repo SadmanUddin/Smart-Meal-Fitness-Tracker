@@ -33,28 +33,26 @@ namespace SmartMeal.core.Services
         //
         // This avoids duplicate rows, since the database also has a UNIQUE constraint
         // on user_id as a safety net. We handle it in code first for a better error message.
-        public async Task UpsertGoalAsync(string userId, int calorieGoal)
+        // targetWeightKg is optional — passing null leaves any existing value unchanged.
+        public async Task UpsertGoalAsync(string userId, int calorieGoal, decimal? targetWeightKg = null)
         {
             var existing = await GetGoalAsync(userId);
 
             if (existing != null)
             {
-                // Update the calorie goal on the row we already have,
-                // then push the change to the database.
                 existing.CalorieGoal = calorieGoal;
+                existing.TargetWeightKg = targetWeightKg;
                 await _client.From<Goal>()
                     .Where(g => g.UserId == userId)
                     .Update(existing);
             }
             else
             {
-                // No goal row exists yet — create the first one.
-                // Other goal fields (protein, carbs, fat, target weight) are left as NULL
-                // because the UI currently only collects the calorie goal.
                 await _client.From<Goal>().Insert(new Goal
                 {
                     UserId = userId,
                     CalorieGoal = calorieGoal,
+                    TargetWeightKg = targetWeightKg,
                     CreatedAt = DateTime.UtcNow
                 });
             }
