@@ -1012,7 +1012,7 @@ The full admin feature was built end-to-end across the DB, service, and UI layer
 
 **Database (run manually in Supabase SQL Editor):**
 - `is_banned boolean NOT NULL DEFAULT false` column added to `public.users`
-- `database/rls_admin_banned_policies.sql` created — reproducible migration covering:
+- Admin/banned RLS policies were applied directly in Supabase SQL Editor (script not kept in repo), covering:
   - `is_current_user_admin()` and `is_current_user_banned()` helper functions (SECURITY DEFINER, no RLS recursion)
   - Admin SELECT + UPDATE policies on `public.users`
   - Self-escalation prevention: users can only INSERT with `role='user'` and `is_banned=false`
