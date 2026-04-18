@@ -164,6 +164,9 @@ namespace SmartMeal.Views
                 dailyGoal = goal.CalorieGoal.Value;
             CaloriesGoalBlock.Text = Math.Round(dailyGoal).ToString();
 
+            // Update indicator now that we have the actual goal value.
+            UpdateCaloriesIndicator(totalCaloriesConsumed, dailyGoal);
+
             if (goal?.TargetWeightKg.HasValue == true)
                 TargetWeightGoalBlock.Text = $"Target weight: {goal.TargetWeightKg.Value:F1} kg";
             else
@@ -201,6 +204,57 @@ namespace SmartMeal.Views
             // Negative: user has exceeded their goal (before exercise credit).
             var balance = dailyGoal - totalCaloriesConsumed + totalCaloriesBurned;
             BalanceBlock.Text = Math.Round(balance).ToString();
+        }
+
+        // Updates the progress bar and status label on the Calories Consumed card.
+        //
+        // Three states:
+        //   - No goal set (goal == 0)   → grey bar at 0, neutral label
+        //   - Under 80% consumed        → green
+        //   - 80–99% consumed           → amber (approaching limit)
+        //   - 100%+ consumed            → red (goal reached or exceeded)
+        private void UpdateCaloriesIndicator(decimal consumed, decimal goal)
+        {
+            if (goal <= 0)
+            {
+                CaloriesProgressBar.Value = 0;
+                CaloriesProgressBar.Foreground =
+                    new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(229, 231, 235));
+                CaloriesStatusBlock.Text = "No goal set";
+                CaloriesConsumedBlock.Foreground =
+                    new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(17, 24, 39));
+                return;
+            }
+
+            double pct = Math.Min((double)(consumed / goal) * 100.0, 100.0);
+            CaloriesProgressBar.Value = pct;
+
+            System.Windows.Media.Color color;
+            string status;
+
+            if (consumed >= goal)
+            {
+                color = System.Windows.Media.Color.FromRgb(239, 68, 68);   // red
+                var over = (int)Math.Round(consumed - goal);
+                status = over == 0 ? "Goal reached!" : $"Over by {over} kcal";
+            }
+            else if (pct >= 80)
+            {
+                color = System.Windows.Media.Color.FromRgb(245, 158, 11);  // amber
+                status = $"{(int)Math.Round(goal - consumed)} kcal remaining";
+            }
+            else
+            {
+                color = System.Windows.Media.Color.FromRgb(16, 185, 129);  // green
+                status = $"{(int)Math.Round(goal - consumed)} kcal remaining";
+            }
+
+            var brush = new System.Windows.Media.SolidColorBrush(color);
+            CaloriesProgressBar.Foreground = brush;
+            CaloriesConsumedBlock.Foreground = brush;
+            CaloriesStatusBlock.Text = status;
         }
 
         // Navigate to AddMealView to log a new meal entry.
