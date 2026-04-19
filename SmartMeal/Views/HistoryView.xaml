@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignHeight="720"
              d:DesignWidth="1280">
@@ -68,6 +69,10 @@
         <Grid Grid.Column="1" Margin="28">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="24"/>
+                <RowDefinition Height="260"/>
                 <RowDefinition Height="24"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
@@ -83,7 +88,137 @@
                            Margin="0,6,0,0"/>
             </StackPanel>
 
-            <Border Grid.Row="2"
+            <!-- Analytics Cards -->
+            <UniformGrid Grid.Row="2" Columns="5" Margin="0">
+                <Border Background="White"
+                        CornerRadius="16"
+                        Margin="0,0,16,0"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Meals"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="MealsCountBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White"
+                        CornerRadius="16"
+                        Margin="0,0,16,0"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Activities"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="ActivitiesCountBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White"
+                        CornerRadius="16"
+                        Margin="0,0,16,0"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Consumed"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="ConsumedBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White"
+                        CornerRadius="16"
+                        Margin="0,0,16,0"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Burned"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="BurnedBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White"
+                        CornerRadius="16"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Balance"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="BalanceBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Charts -->
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Background="White"
+                        CornerRadius="18"
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Meal Calories Chart"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,0,0,12"/>
+
+                        <lvc:CartesianChart Series="{Binding MealSeries}"
+                                            XAxes="{Binding MealXAxes}"
+                                            Height="180"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2"
+                        Background="White"
+                        CornerRadius="18"
+                        Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Activity Burned Chart"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,0,0,12"/>
+
+                        <lvc:CartesianChart Series="{Binding ActivitySeries}"
+                                            XAxes="{Binding ActivityXAxes}"
+                                            Height="180"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- History Table -->
+            <Border Grid.Row="6"
                     Background="White"
                     CornerRadius="18"
                     Padding="20">
