@@ -38,7 +38,8 @@
                         Background="#2563EB"
                         Foreground="White"
                         BorderThickness="0"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="AddMeal_Click"/>
 
                 <Button Content="Activities"
                         Height="42"
@@ -46,7 +47,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Activities_Click"/>
 
                 <Button Content="History"
                         Height="42"
@@ -54,7 +56,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="History_Click"/>
 
                 <Button Content="Profile"
                         Height="42"
@@ -62,7 +65,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Profile_Click"/>
             </StackPanel>
         </Border>
 

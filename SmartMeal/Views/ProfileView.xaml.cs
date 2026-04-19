@@ -12,50 +12,31 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using SmartMeal.Views;
 using SmartMeal.core.Services;
 
 namespace SmartMeal.Views
 {
-    public partial class AddMealView : UserControl
+    public partial class ProfileView : UserControl
     {
-        private readonly MealService mealService;
-        public AddMealView()
+        public ProfileView()
         {
             InitializeComponent();
-            mealService = ((MainWindow)Application.Current.MainWindow).MealService;
+            LoadProfile();
         }
-
-        private void AddMeal_Click(object sender, RoutedEventArgs e)
+        private void LoadProfile()
         {
-            if(!int.TryParse(CaloriesTextBox.Text, out int calories))
-            {
-                MessageBox.Show("Please enter a valid number for calories.");
-                return;
-            }
             var mainWindow = (MainWindow)Application.Current.MainWindow;
             if (mainWindow.CurrentUser == null)
             {
                 MessageBox.Show("No user logged in.");
                 return;
             }
-
-            var meal = new core.Models.Meal
-            {
-                Id = Guid.NewGuid(),
-                UserId = mainWindow.CurrentUser.Id,
-                Name = MealNameTextBox.Text,
-                Calories = calories,
-                Category = ((ComboBoxItem)CategoryComboBox.SelectedItem)?.Content.ToString() ?? "",
-                Date = DateTime.Now
-            };
-            mealService.AddMeal(meal);
-            MessageBox.Show("Meal added");
-            mainWindow.Navigate(new DashboardView());
-        }
-        private void Cancel_Click(object sender, RoutedEventArgs e)
-        {
-            var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.Navigate(new DashboardView());
+            var user = mainWindow.CurrentUser;
+            NameBlock.Text = user.Name;
+            EmailBlock.Text = user.Email;
+            RoleBlock.Text = user.Role;
+            CreatedAtBlock.Text = user.CreatedAt.ToString("MMMM dd, yyyy");
         }
         private void Dashboard_Click(object sender, RoutedEventArgs e)
         {

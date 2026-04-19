@@ -59,5 +59,20 @@ namespace SmartMeal.Views
             var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new AddMealView());
         }
+        private void Activities_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.Navigate(new AddActivityView());
+        }
+        private void History_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.Navigate(new HistoryView());
+        }
+        private void Profile_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.Navigate(new ProfileView());
+        }
     }
 }

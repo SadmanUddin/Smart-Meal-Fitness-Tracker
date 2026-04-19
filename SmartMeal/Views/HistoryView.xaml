@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="SmartMeal.Views.SetGoalView"
+﻿<UserControl x:Class="SmartMeal.Views.HistoryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -29,7 +29,6 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"
                         Click="Dashboard_Click"/>
 
                 <Button Content="Meals"
@@ -38,7 +37,6 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"
                         Click="AddMeal_Click"/>
 
                 <Button Content="Activities"
@@ -47,16 +45,23 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"
                         Click="Activities_Click"/>
 
-                <Button Content="Set Goal"
+                <Button Content="History"
                         Height="42"
                         Margin="0,0,0,12"
                         Background="#2563EB"
                         Foreground="White"
                         BorderThickness="0"
                         FontWeight="SemiBold"/>
+
+                <Button Content="Profile"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        Click="Profile_Click"/>
             </StackPanel>
         </Border>
 
@@ -68,11 +73,11 @@
             </Grid.RowDefinitions>
 
             <StackPanel>
-                <TextBlock Text="Set Daily Goal"
+                <TextBlock Text="History"
                            FontSize="30"
                            FontWeight="Bold"
                            Foreground="#111827"/>
-                <TextBlock Text="Set your target daily calorie goal."
+                <TextBlock Text="View your meals and activities in one place."
                            FontSize="14"
                            Foreground="#6B7280"
                            Margin="0,6,0,0"/>
@@ -81,42 +86,21 @@
             <Border Grid.Row="2"
                     Background="White"
                     CornerRadius="18"
-                    Padding="30"
-                    Width="520"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top">
-                <StackPanel>
-                    <TextBlock Text="Daily Calories Goal"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               Foreground="#374151"/>
-                    <TextBox x:Name="DailyGoalTextBox"
-                             Height="42"
-                             Margin="0,10,0,24"
-                             Padding="10"
-                             FontSize="14"/>
-
-                    <WrapPanel HorizontalAlignment="Right">
-                        <Button Content="Cancel"
-                                Width="110"
-                                Height="40"
-                                Margin="0,0,12,0"
-                                Background="#E5E7EB"
-                                Foreground="#111827"
-                                BorderThickness="0"
-                                FontWeight="SemiBold"
-                                Click="Cancel_Click"/>
-
-                        <Button Content="Save Goal"
-                                Width="130"
-                                Height="40"
-                                Background="#F59E0B"
-                                Foreground="White"
-                                BorderThickness="0"
-                                FontWeight="SemiBold"
-                                Click="SetGoal_Click"/>
-                    </WrapPanel>
-                </StackPanel>
+                    Padding="20">
+                <DataGrid x:Name="HistoryDataGrid"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          RowHeight="40">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="120"/>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="180"/>
+                        <DataGridTextColumn Header="Calories" Binding="{Binding Calories}" Width="120"/>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Date}" Width="180"/>
+                    </DataGrid.Columns>
+                </DataGrid>
             </Border>
         </Grid>
     </Grid>
