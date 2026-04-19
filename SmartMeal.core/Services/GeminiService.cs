@@ -1,14 +1,10 @@
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SmartMeal.core.Services
 {
-    // Calls the Gemini REST API to generate a personalised daily meal plan.
-    // The prompt is built from the user's profile so recommendations respect their
-    // calorie goal, dietary preferences, and allergies.
     public class GeminiService
     {
         private readonly string _apiKey;
@@ -17,29 +13,58 @@ namespace SmartMeal.core.Services
         private const string Endpoint =
             $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent";
 
-        public GeminiService(string apiKey)
+        // Reusable schema object — tells Gemini the exact JSON shape to produce.
+        // Using uppercase type names required by the Gemini structured-output API.
+        private static readonly object _responseSchema = new
         {
-            _apiKey = apiKey;
-        }
+            type = "OBJECT",
+            properties = new
+            {
+                breakfast = MealArraySchema(),
+                lunch     = MealArraySchema(),
+                dinner    = MealArraySchema(),
+                snacks    = MealArraySchema()
+            },
+            required = new[] { "breakfast", "lunch", "dinner", "snacks" }
+        };
 
-        // Generates a full-day meal plan split into Breakfast, Lunch, Dinner, Snacks.
-        // Returns null if the API call fails or the response cannot be parsed.
-        // Throws on API or parse failure so callers can surface the real error.
+        private static object MealArraySchema() => new
+        {
+            type  = "ARRAY",
+            items = new
+            {
+                type = "OBJECT",
+                properties = new
+                {
+                    name        = new { type = "STRING" },
+                    calories    = new { type = "INTEGER" },
+                    description = new { type = "STRING" }
+                },
+                required = new[] { "name", "calories", "description" }
+            }
+        };
+
+        public GeminiService(string apiKey) => _apiKey = apiKey;
+
         public async Task<MealPlan> GenerateMealPlanAsync(MealPlanRequest request)
         {
             if (string.IsNullOrWhiteSpace(_apiKey))
                 throw new InvalidOperationException(
                     "Gemini API key is empty. Set GeminiApiKey in supabase.config.json or SMARTMEAL_GEMINI_API_KEY.");
 
-            var prompt = BuildPrompt(request);
-
             var bodyJson = JsonSerializer.Serialize(new
             {
                 contents = new[]
                 {
-                    new { parts = new[] { new { text = prompt } } }
+                    new { parts = new[] { new { text = BuildPrompt(request) } } }
                 },
-                generationConfig = new { temperature = 0.7, maxOutputTokens = 1024 }
+                generationConfig = new
+                {
+                    temperature      = 0.7,
+                    maxOutputTokens  = 8192,
+                    responseMimeType = "application/json",
+                    responseSchema   = _responseSchema
+                }
             });
 
             using var req = new HttpRequestMessage(HttpMethod.Post, Endpoint);
@@ -60,33 +85,28 @@ namespace SmartMeal.core.Services
                 .GetProperty("text")
                 .GetString() ?? string.Empty;
 
-            return ParseMealPlan(text)
-                ?? throw new InvalidOperationException("Gemini returned a response that could not be parsed as a meal plan.");
+            var plan = ParseMealPlan(text);
+            if (plan == null)
+                throw new InvalidOperationException(
+                    $"Could not parse Gemini response. Raw text:{Environment.NewLine}{text[..Math.Min(text.Length, 500)]}");
+
+            return plan;
         }
 
         private static string BuildPrompt(MealPlanRequest r)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("You are a certified nutritionist. Generate a one-day meal plan for this person.");
-            sb.AppendLine();
-            sb.AppendLine($"Daily calorie goal: {r.CalorieGoal} kcal");
-            if (r.Age.HasValue)       sb.AppendLine($"Age: {r.Age} years");
-            if (r.Gender != null)     sb.AppendLine($"Gender: {r.Gender}");
-            if (r.WeightKg.HasValue)  sb.AppendLine($"Weight: {r.WeightKg} kg");
-            if (r.HeightCm.HasValue)  sb.AppendLine($"Height: {r.HeightCm} cm");
+            sb.AppendLine("You are a nutritionist. Generate a one-day meal plan.");
+            sb.AppendLine($"Calorie goal: {r.CalorieGoal} kcal/day.");
+            if (r.Age.HasValue)      sb.AppendLine($"Age: {r.Age}.");
+            if (r.Gender != null)    sb.AppendLine($"Gender: {r.Gender}.");
+            if (r.WeightKg.HasValue) sb.AppendLine($"Weight: {r.WeightKg} kg.");
+            if (r.HeightCm.HasValue) sb.AppendLine($"Height: {r.HeightCm} cm.");
             if (!string.IsNullOrWhiteSpace(r.FoodPreferences))
-                sb.AppendLine($"Dietary preferences: {r.FoodPreferences}");
+                sb.AppendLine($"Dietary preferences: {r.FoodPreferences}.");
             if (!string.IsNullOrWhiteSpace(r.Allergies))
-                sb.AppendLine($"Allergies / foods to avoid: {r.Allergies}");
-            sb.AppendLine();
-            sb.AppendLine("Return ONLY valid JSON in this exact format (no markdown, no extra text):");
-            sb.AppendLine(@"{
-  ""breakfast"": [{ ""name"": ""..."", ""calories"": 0, ""description"": ""..."" }],
-  ""lunch"":     [{ ""name"": ""..."", ""calories"": 0, ""description"": ""..."" }],
-  ""dinner"":    [{ ""name"": ""..."", ""calories"": 0, ""description"": ""..."" }],
-  ""snacks"":    [{ ""name"": ""..."", ""calories"": 0, ""description"": ""..."" }]
-}");
-            sb.AppendLine("Each section should have 2-3 items. Calories should be realistic numbers.");
+                sb.AppendLine($"Avoid: {r.Allergies}.");
+            sb.AppendLine("Provide 2-3 items per meal. Keep descriptions under 10 words.");
             return sb.ToString();
         }
 
@@ -94,7 +114,6 @@ namespace SmartMeal.core.Services
         {
             var clean = text.Trim();
 
-            // Strip markdown code fences
             if (clean.StartsWith("```"))
             {
                 var first = clean.IndexOf('\n');
@@ -103,8 +122,6 @@ namespace SmartMeal.core.Services
                     clean = clean[(first + 1)..last].Trim();
             }
 
-            // Gemini sometimes adds prose before/after the JSON object.
-            // Extract from the first '{' to the matching last '}'.
             var start = clean.IndexOf('{');
             var end   = clean.LastIndexOf('}');
             if (start >= 0 && end > start)
@@ -112,8 +129,8 @@ namespace SmartMeal.core.Services
 
             try
             {
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return JsonSerializer.Deserialize<MealPlan>(clean, options);
+                return JsonSerializer.Deserialize<MealPlan>(clean,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
             catch
             {

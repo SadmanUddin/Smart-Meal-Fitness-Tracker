@@ -60,14 +60,6 @@
                         FontWeight="SemiBold"
                         Click="History_Click"/>
 
-                <Button Content="Recommendations"
-                        Height="42"
-                        Margin="0,0,0,12"
-                        Background="#2563EB"
-                        Foreground="White"
-                        BorderThickness="0"
-                        FontWeight="SemiBold"/>
-
                 <Button Content="Profile"
                         Height="42"
                         Margin="0,0,0,12"
@@ -76,6 +68,14 @@
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Profile_Click"/>
+
+                <Button Content="Recommendations"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#2563EB"
+                        Foreground="White"
+                        BorderThickness="0"
+                        FontWeight="SemiBold"/>
 
                 <Button Content="Log Out"
                         Height="42"
@@ -113,7 +113,7 @@
             <!-- Preferences summary bar -->
             <Border Grid.Row="2"
                     Background="White"
-                    CornerRadius="14"
+                    CornerRadius="18"
                     Padding="16,12">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -163,7 +163,7 @@
                             Content="Generate Plan"
                             Width="140"
                             Height="38"
-                            Background="#6366F1"
+                            Background="#2563EB"
                             Foreground="White"
                             BorderThickness="0"
                             FontWeight="SemiBold"
