@@ -134,5 +134,16 @@ namespace SmartMeal.Views
         {
             _mainWindow.Navigate(new ProfileView());
         }
+
+        private void Recommendations_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new RecommendationsView());
+        }
+
+        private async void BackToLog_Click(object sender, RoutedEventArgs e)
+        {
+            await _authService.SignOutAsync();
+            _mainWindow.Navigate(new LoginView());
+        }
     }
 }

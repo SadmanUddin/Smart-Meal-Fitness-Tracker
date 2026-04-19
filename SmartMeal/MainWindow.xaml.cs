@@ -135,12 +135,24 @@ namespace SmartMeal
             };
 
             var merged = new SupabaseConfig();
+            var parseErrors = new List<string>();
             foreach (var path in candidatePaths)
             {
                 if (File.Exists(path))
                 {
-                    var loaded = await ReadConfigFileAsync(path);
-                    MergeConfig(merged, loaded);
+                    try
+                    {
+                        var loaded = await ReadConfigFileAsync(path);
+                        MergeConfig(merged, loaded);
+                    }
+                    catch (Exception ex) when (
+                        ex is IOException ||
+                        ex is UnauthorizedAccessException ||
+                        ex is JsonException ||
+                        ex is InvalidDataException)
+                    {
+                        parseErrors.Add($"{path}: {ex.Message}");
+                    }
                 }
             }
 
@@ -159,8 +171,15 @@ namespace SmartMeal
             if (!string.IsNullOrWhiteSpace(merged.SupabaseUrl) && !string.IsNullOrWhiteSpace(merged.SupabaseAnonKey))
                 return merged;
 
+            var searched = string.Join(Environment.NewLine, candidatePaths.Select(p => $" - {p}"));
+            var parseDetails = parseErrors.Count > 0
+                ? $"{Environment.NewLine}{Environment.NewLine}Config file parse/read errors:{Environment.NewLine}{string.Join(Environment.NewLine, parseErrors.Select(e => $" - {e}"))}"
+                : string.Empty;
+
             throw new FileNotFoundException(
-                $"Supabase config not found. Set environment variables `{UrlEnvVar}` and `{KeyEnvVar}`, or create `supabase.config.local.json` from `supabase.config.example.json` in the SmartMeal project.");
+                $"Supabase config not found or incomplete (missing URL/anon key). " +
+                $"Set environment variables `{UrlEnvVar}` and `{KeyEnvVar}`, or create `supabase.config.local.json` from `supabase.config.example.json` in the SmartMeal project.{Environment.NewLine}{Environment.NewLine}" +
+                $"Searched paths:{Environment.NewLine}{searched}{parseDetails}");
         }
 
         private static string? NormalizeOptional(string? value)
@@ -171,9 +190,20 @@ namespace SmartMeal
         private static async Task<SupabaseConfig> ReadConfigFileAsync(string path)
         {
             var json = await File.ReadAllTextAsync(path);
+            if (string.IsNullOrWhiteSpace(json))
+                throw new InvalidDataException("Config file is empty.");
+
             var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            return JsonSerializer.Deserialize<SupabaseConfig>(json, opts)
-                ?? throw new InvalidOperationException($"Could not load Supabase config file: {path}");
+
+            try
+            {
+                return JsonSerializer.Deserialize<SupabaseConfig>(json, opts)
+                    ?? throw new InvalidDataException("Config JSON deserialized to null.");
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidDataException($"Invalid JSON in config file.", ex);
+            }
         }
 
         private static void MergeConfig(SupabaseConfig target, SupabaseConfig source)
