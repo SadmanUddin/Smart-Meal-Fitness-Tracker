@@ -321,7 +321,7 @@ namespace SmartMeal.Views
         private void Meals_Click(object sender, RoutedEventArgs e)
         {
             var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.Navigate(new AddMealView());
+            mainWindow.Navigate(new MealsView());
         }
         //private void History_Click(object sender, RoutedEventArgs e)
         //{
