@@ -173,5 +173,10 @@ namespace SmartMeal.Views
             var mainWindow = (MainWindow)Application.Current.MainWindow;
             mainWindow.Navigate(new ProfileView());
         }
+        private void Recommendation_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = (MainWindow)Application.Current.MainWindow;
+            mainWindow.Navigate(new RecommendationView());
+        }
     }
 }

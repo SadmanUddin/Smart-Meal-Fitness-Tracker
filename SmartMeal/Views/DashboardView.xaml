@@ -66,6 +66,14 @@
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Profile_Click"/>
+                <Button Content="Recommendation"
+            Height="42"
+            Margin="0,0,0,12"
+            Background="#1F2937"
+            Foreground="White"
+            BorderBrush="#374151"
+            FontWeight="SemiBold"
+            Click="Recommendation_Click"/>
                 <Button Content="Log Out"
                         Height="42"
                         Margin="0,0,0,12"
@@ -298,6 +306,7 @@
                         </WrapPanel>
                     </StackPanel>
                 </Border>
+                
 
                 <Border Grid.Column="2"
                         Background="White"

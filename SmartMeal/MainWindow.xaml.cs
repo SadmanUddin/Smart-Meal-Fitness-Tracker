@@ -22,6 +22,7 @@ namespace SmartMeal
         public MealService MealService { get; } = new MealService();
         public ActService ActService { get; } = new ActService();
         public GoalService GoalService { get; } = new GoalService();
+        public RecommendationService RecommendationService { get; } = new RecommendationService();
         public User? CurrentUser{ get; set; } // for holding the current user data while the app opens
         public MainWindow()
         {
