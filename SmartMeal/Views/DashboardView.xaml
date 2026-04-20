@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="SmartMeal.Views.DashboardView"
+﻿    <UserControl x:Class="SmartMeal.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -47,7 +47,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="AddActivity_Click"/>
 
                 <Button Content="History"
                         Height="42"
@@ -66,6 +67,16 @@
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Profile_Click"/>
+
+                <Button Content="Recommendations"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Recommendations_Click"/>
+
                 <Button Content="Log Out"
                         Height="42"
                         Margin="0,0,0,12"
@@ -140,6 +151,11 @@
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="0,6,0,0"/>
+                        <TextBlock x:Name="TargetWeightGoalBlock"
+                                   Text=""
+                                   FontSize="13"
+                                   Foreground="#6B7280"
+                                   Margin="0,6,0,0"/>
                     </StackPanel>
 
                     <Button Grid.Column="1"
@@ -155,8 +171,28 @@
                 </Grid>
             </Border>
 
-            <!-- Summary Cards -->
-            <UniformGrid Grid.Row="4" Columns="5" Margin="0">
+            <!-- Summary Cards: Meals → Consumed → Activities → Burned → Balance → BMI -->
+            <UniformGrid Grid.Row="4" Columns="6" Margin="0">
+
+                <!-- 1. Meals logged today -->
+                <Border Background="White"
+                        CornerRadius="16"
+                        Margin="0,0,16,0"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="Meals Today"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="MealsCountBlock"
+                                   Text="0"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 2. Calories consumed from those meals (with goal progress) -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -170,27 +206,24 @@
                                    FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="#111827"
-                                   Margin="0,10,0,0"/>
-                    </StackPanel>
-                </Border>
-
-                <Border Background="White"
-                        CornerRadius="16"
-                        Margin="0,0,16,0"
-                        Padding="18">
-                    <StackPanel>
-                        <TextBlock Text="Meals"
-                                   FontSize="13"
+                                   Margin="0,10,0,4"/>
+                        <ProgressBar x:Name="CaloriesProgressBar"
+                                     Height="6"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="0"
+                                     Foreground="#10B981"
+                                     Background="#E5E7EB"
+                                     BorderThickness="0"
+                                     Margin="0,0,0,4"/>
+                        <TextBlock x:Name="CaloriesStatusBlock"
+                                   Text=""
+                                   FontSize="11"
                                    Foreground="#6B7280"/>
-                        <TextBlock x:Name="MealsCountBlock"
-                                   Text="0"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   Foreground="#111827"
-                                   Margin="0,10,0,0"/>
                     </StackPanel>
                 </Border>
 
+                <!-- 3. Activities logged -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -208,6 +241,7 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 4. Calories burned from those activities -->
                 <Border Background="White"
                         CornerRadius="16"
                         Margin="0,0,16,0"
@@ -225,8 +259,10 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 5. Net balance = goal − consumed + burned -->
                 <Border Background="White"
                         CornerRadius="16"
+                        Margin="0,0,16,0"
                         Padding="18">
                     <StackPanel>
                         <TextBlock Text="Balance"
@@ -238,6 +274,33 @@
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="0,10,0,0"/>
+                        <TextBlock Text="goal − consumed + burned"
+                                   FontSize="10"
+                                   Foreground="#9CA3AF"
+                                   Margin="0,4,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 6. BMI — body metric, not a daily figure -->
+                <Border Background="White"
+                        CornerRadius="16"
+                        Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="BMI"
+                                   FontSize="13"
+                                   Foreground="#6B7280"/>
+                        <TextBlock x:Name="BmiValueBlock"
+                                   Text="—"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,10,0,0"/>
+                        <TextBlock x:Name="BmiCategoryBlock"
+                                   Text=""
+                                   FontSize="11"
+                                   Foreground="#6B7280"
+                                   Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>

@@ -30,7 +30,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Dashboard_Click"/>
 
                 <Button Content="Meals"
                         Height="42"
@@ -39,7 +40,7 @@
                         Foreground="White"
                         BorderThickness="0"
                         FontWeight="SemiBold"
-                        Click="AddMeal_Click"/>
+                        Click="Meals_Click"/>
 
                 <Button Content="Activities"
                         Height="42"
@@ -67,6 +68,24 @@
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Profile_Click"/>
+
+                <Button Content="Recommendations"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Recommendations_Click"/>
+
+                <Button Content="Log Out"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="BackToLog_Click"/>
             </StackPanel>
         </Border>
 
@@ -102,76 +121,145 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Meal Name Box -->
+                <!-- Food Item Box -->
                 <Border Grid.Column="0"
                         Background="White"
                         CornerRadius="18"
-                        Padding="24"
-                        MinHeight="180">
+                        Padding="24">
                     <StackPanel>
-                        <TextBlock Text="Meal Name"
+                        <TextBlock Text="Food Item"
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="0,0,0,10"/>
-                        <TextBlock Text="Enter the name of the meal."
+                        <TextBlock Text="Type to search the USDA food database."
                                    FontSize="13"
                                    Foreground="#6B7280"
-                                   Margin="0,0,0,16"/>
-                        <TextBox x:Name="MealNameTextBox"
+                                   Margin="0,0,0,12"/>
+
+                        <!-- Search input -->
+                        <TextBox x:Name="FoodSearchTextBox"
                                  Height="42"
                                  Padding="10"
-                                 FontSize="14"/>
+                                 FontSize="14"
+                                 TextChanged="FoodSearchTextBox_TextChanged"/>
+
+                        <!-- Searching indicator -->
+                        <TextBlock x:Name="SearchingLabel"
+                                   Text="Searching..."
+                                   FontSize="12"
+                                   Foreground="#9CA3AF"
+                                   Margin="0,6,0,0"
+                                   Visibility="Collapsed"/>
+
+                        <!-- Results list (visible while searching, hidden after selection) -->
+                        <Border x:Name="FoodResultsBorder"
+                                Visibility="Collapsed"
+                                Background="#F9FAFB"
+                                CornerRadius="10"
+                                BorderBrush="#E5E7EB"
+                                BorderThickness="1"
+                                Margin="0,6,0,0"
+                                MaxHeight="240">
+                            <ListBox x:Name="FoodResultsListBox"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     SelectionChanged="FoodResultsListBox_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="4,6">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="#111827"/>
+                                            <TextBlock Text="{Binding CaloriesLabel}"
+                                                       FontSize="11"
+                                                       Foreground="#6B7280"
+                                                       Margin="0,2,0,0"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                        <!-- Selected food chip (shown after picking a result) -->
+                        <Border x:Name="SelectedFoodBorder"
+                                Background="#EFF6FF"
+                                CornerRadius="10"
+                                Padding="12,8"
+                                Margin="0,6,0,0"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="SelectedFoodLabel"
+                                           FontSize="13"
+                                           Foreground="#2563EB"
+                                           TextWrapping="Wrap"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="1"
+                                        Content="Clear"
+                                        FontSize="11"
+                                        Height="24"
+                                        Padding="8,0"
+                                        Margin="8,0,0,0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Foreground="#6B7280"
+                                        VerticalAlignment="Center"
+                                        Click="ClearSelectedFood_Click"/>
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </Border>
 
-                <!-- Calories Box -->
+                <!-- Grams Box -->
                 <Border Grid.Column="2"
                         Background="White"
                         CornerRadius="18"
                         Padding="24"
                         MinHeight="180">
                     <StackPanel>
-                        <TextBlock Text="Calories"
+                        <TextBlock Text="Grams"
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="0,0,0,10"/>
-                        <TextBlock Text="Enter the calorie amount."
+                        <TextBlock Text="Enter the amount in grams."
                                    FontSize="13"
                                    Foreground="#6B7280"
                                    Margin="0,0,0,16"/>
-                        <TextBox x:Name="CaloriesTextBox"
+                        <TextBox x:Name="GramsTextBox"
                                  Height="42"
                                  Padding="10"
                                  FontSize="14"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Category Box -->
+                <!-- Meal Type Box -->
                 <Border Grid.Column="4"
                         Background="White"
                         CornerRadius="18"
                         Padding="24"
                         MinHeight="180">
                     <StackPanel>
-                        <TextBlock Text="Category"
+                        <TextBlock Text="Meal Type"
                                    FontSize="18"
                                    FontWeight="Bold"
                                    Foreground="#111827"
                                    Margin="0,0,0,10"/>
-                        <TextBlock Text="Select the meal category."
+                        <TextBlock Text="Select breakfast, lunch, etc."
                                    FontSize="13"
                                    Foreground="#6B7280"
                                    Margin="0,0,0,16"/>
-                        <ComboBox x:Name="CategoryComboBox"
+                        <ComboBox x:Name="MealTypeComboBox"
                                   Height="42"
-                                  FontSize="14">
-                            <ComboBoxItem Content="Breakfast"/>
-                            <ComboBoxItem Content="Lunch"/>
-                            <ComboBoxItem Content="Dinner"/>
-                            <ComboBoxItem Content="Snack"/>
-                        </ComboBox>
+                                  FontSize="14"/>
                     </StackPanel>
                 </Border>
             </Grid>

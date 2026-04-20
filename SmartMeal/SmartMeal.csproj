@@ -14,6 +14,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="supabase.config.json" Condition="Exists('supabase.config.json')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="supabase.config.local.json" Condition="Exists('supabase.config.local.json')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="supabase.config.example.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Helpers\" />
     <Folder Include="Resources\" />
     <Folder Include="ViewModels\" />

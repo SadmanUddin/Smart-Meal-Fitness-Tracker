@@ -29,7 +29,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Dashboard_Click"/>
 
                 <Button Content="Meals"
                         Height="42"
@@ -37,7 +38,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Meals_Click"/>
 
                 <Button Content="Activities"
                         Height="42"
@@ -53,7 +55,8 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="History_Click"/>
 
                 <Button Content="Profile"
                         Height="42"
@@ -61,7 +64,26 @@
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Profile_Click"/>
+
+                <Button Content="Recommendations"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="Recommendations_Click"/>
+
+                <Button Content="Log Out"
+                        Height="42"
+                        Margin="0,0,0,12"
+                        Background="#1F2937"
+                        Foreground="White"
+                        BorderBrush="#374151"
+                        FontWeight="SemiBold"
+                        Click="BackToLog_Click"/>
             </StackPanel>
         </Border>
 
