@@ -1,18 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Supabase.Postgrest.Attributes;
+using Supabase.Postgrest.Models;
 
 namespace SmartMeal.core.Models
 {
-    public class Activity
+    [Table("activities")]
+    public class Activity : BaseModel
     {
-        public Guid Id { get; set; }
-        public Guid UserId { get; set; }
+        [PrimaryKey("activity_id")]
+        public long ActivityId { get; set; }
+
+        [Column("user_id")]
+        public string UserId { get; set; } = string.Empty;
+
+        [Column("name")]
         public string Name { get; set; } = string.Empty;
+
+        [Column("calories_burned")]
         public int CaloriesBurned { get; set; }
-        public DateTime Date { get; set; }
-        public int Duration { get; set; } // duration in minutes
+
+        [Column("duration_minutes")]
+        public int DurationMinutes { get; set; }
+
+        [Column("logged_at")]
+        public DateTime LoggedAt { get; set; }
+
+        [Column("notes")]
+        public string? Notes { get; set; }
     }
 }

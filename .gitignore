@@ -2,10 +2,14 @@
 bin/
 obj/
 *.user
+supabase.config.json
+supabase.config.local.json
 *.suo
 *.cache
+*.lscache
 *.pdb
 *.db
 *.sqlite
 Copilotindices/
 .vscode/
+.DS_Store
