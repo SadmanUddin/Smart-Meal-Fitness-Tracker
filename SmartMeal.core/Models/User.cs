@@ -1,10 +1,3 @@
-// Represents a row in the public.users table.
-// Every user who registers gets one row here, linked to their Supabase Auth account
-// by sharing the same UUID as the primary key.
-//
-// The [Table] attribute tells the Supabase ORM which table this class maps to.
-// The [Column] attributes map each C# property to its database column name.
-// BaseModel is a Supabase SDK base class that provides change-tracking for updates.
 
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;

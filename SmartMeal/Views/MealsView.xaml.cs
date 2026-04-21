@@ -151,7 +151,7 @@ namespace SmartMeal.Views
 
         private void Activities_Click(object sender, RoutedEventArgs e)
         {
-            _mainWindow.Navigate(new AddActivityView());
+            _mainWindow.Navigate(new ActivitiesView());
         }
 
         // Navigate to WeightHistoryView to see the weight graph and log a new weigh-in.

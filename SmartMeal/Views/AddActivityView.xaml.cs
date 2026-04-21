@@ -1,16 +1,3 @@
-// AddActivityView is the form where the user logs a physical activity (e.g. a workout).
-//
-// The user enters:
-//   - Activity name (free text, e.g. "Running", "Cycling")
-//   - Calories burned (whole number)
-//   - Duration in minutes
-//
-// Activities are persisted to Supabase (public.activities), scoped by the logged-in user.
-// Data remains available across app restarts and user sessions.
-//
-// On success the user is returned to the Dashboard, where the activity count
-// and calories-burned total update from the latest database data.
-
 using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.Helpers;
@@ -107,6 +94,10 @@ namespace SmartMeal.Views
         private void Meals_Click(object sender, RoutedEventArgs e)
         {
             _mainWindow.Navigate(new MealsView());
+        }
+        private void Activities_Click(object sender, RoutedEventArgs e)
+        {
+            _mainWindow.Navigate(new ActivitiesView());
         }
 
         // Navigate to WeightHistoryView to see the weight graph and log a new weigh-in.

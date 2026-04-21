@@ -47,7 +47,8 @@
                         Background="#2563EB"
                         Foreground="White"
                         BorderThickness="0"
-                        FontWeight="SemiBold"/>
+                        FontWeight="SemiBold"
+                        Click="Activities_Click"/>
 
                 <Button Content="History"
                         Height="42"

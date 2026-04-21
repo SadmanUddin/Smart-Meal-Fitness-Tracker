@@ -30,5 +30,11 @@ namespace SmartMeal.core.Services
                 .Get();
             return result.Models;
         }
+        public async Task DeleteActivityAsync(long activityId)
+        {
+            await _client.From<Activity>()
+                .Where(a => a.ActivityId == activityId)
+                .Delete();
+        }
     }
 }

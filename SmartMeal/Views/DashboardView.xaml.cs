@@ -312,7 +312,7 @@ namespace SmartMeal.Views
         private void Activities_Click(object sender, RoutedEventArgs e)
         {
             var mainWindow = (MainWindow)Application.Current.MainWindow;
-            mainWindow.Navigate(new AddActivityView());
+            mainWindow.Navigate(new ActivitiesView());
         }
 
 
