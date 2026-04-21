@@ -435,8 +435,6 @@ namespace SmartMeal.Views
             }
         }
 
-        // --- Sidebar navigation ---
-
         private void Dashboard_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new DashboardView());
 
