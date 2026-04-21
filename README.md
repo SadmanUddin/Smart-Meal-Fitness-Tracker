@@ -71,7 +71,7 @@ A Windows desktop application built with **WPF (.NET 8)** and **Supabase** that 
 │        ├── LoginView / RegisterView                        │
 │        ├── DashboardView                                   │
 │        ├── AddMealView / MealsView                         │
-│        ├── AddActivityView                                 │
+│        ├── AddActivityView / ActivitiesView                │
 │        ├── SetGoalView                                     │
 │        ├── WeightHistoryView                               │
 │        ├── ProfileView                                     │
@@ -113,6 +113,7 @@ SmartMealSolution/
 │   │   ├── DashboardView.xaml/.cs
 │   │   ├── AddMealView.xaml/.cs
 │   │   ├── MealsView.xaml/.cs
+|   |   ├── ActivitiesView.xaml/.cs
 │   │   ├── AddActivityView.xaml/.cs
 │   │   ├── SetGoalView.xaml/.cs
 │   │   ├── WeightHistoryView.xaml/.cs
