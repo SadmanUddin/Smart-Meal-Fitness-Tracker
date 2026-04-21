@@ -1,17 +1,3 @@
-// DashboardView is the main hub the user lands on after logging in.
-// It shows a live summary of four stats:
-//   - Meals logged today (count)
-//   - Calories consumed today (calculated from grams × per-100g data for each food)
-//   - Activities logged by this user (count, persisted in Supabase)
-//   - Calories burned from those activities
-//
-// It also shows:
-//   - The user's daily calorie goal (stored in the Supabase goals table)
-//   - A "Balance" figure: goal − consumed + burned
-//   - A one-line preview of the most recent meal and most recent activity
-//
-// Navigation buttons: Add Meal, Add Activity, Set Goal, Meals, Logout, History, Profile.
-
 using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.Helpers;
@@ -21,8 +7,7 @@ namespace SmartMeal.Views
 {
     public partial class DashboardView : UserControl
     {
-        // All services are pulled from MainWindow, which is the single shared service host.
-        // No service is created here — they all live for the lifetime of the app process.
+        //All services are pulled from MainWindow because that's the single source of truth for app state and data access.
         private readonly MainWindow _mainWindow;
         private readonly MealService _mealService;
         private readonly FoodService _foodService;

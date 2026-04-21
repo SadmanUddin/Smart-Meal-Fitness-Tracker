@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
              d:DesignHeight="720"
              d:DesignWidth="1280">
@@ -51,7 +52,6 @@
                         FontWeight="SemiBold"
                         Click="Activities_Click"/>
 
-                <!-- History is the current page — highlighted blue, no click handler needed -->
                 <Button Content="History"
                         Height="42"
                         Margin="0,0,0,12"
@@ -59,7 +59,6 @@
                         Foreground="White"
                         BorderThickness="0"
                         FontWeight="SemiBold"/>
-
 
                 <Button Content="Recommendations"
                         Height="42"
@@ -69,6 +68,7 @@
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Recommendations_Click"/>
+
                 <Button Content="Profile"
                         Height="42"
                         Margin="0,0,0,12"
@@ -96,10 +96,12 @@
                 <RowDefinition Height="16"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="16"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="380"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="300"/>
             </Grid.RowDefinitions>
 
-            <!-- Header row: title on left, stat cards on right -->
+            <!-- Header -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -121,7 +123,6 @@
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
 
-                    <!-- Target weight card -->
                     <Border Background="White"
                             CornerRadius="12"
                             Padding="18,12"
@@ -142,7 +143,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Latest weight card -->
                     <Border Background="White"
                             CornerRadius="12"
                             Padding="18,12">
@@ -228,7 +228,7 @@
                 </Grid>
             </Border>
 
-            <!-- Chart card -->
+            <!-- Weight Chart -->
             <Border Grid.Row="4"
                     x:Name="ChartBorder"
                     Background="White"
@@ -242,7 +242,6 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Chart header with filter buttons -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -289,8 +288,6 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Chart drawing area — the Grid fills available space,
-                         the Canvas is drawn to programmatically -->
                     <Grid Grid.Row="2"
                           x:Name="ChartAreaGrid"
                           SizeChanged="ChartAreaGrid_SizeChanged"
@@ -299,6 +296,33 @@
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"/>
                     </Grid>
+                </Grid>
+            </Border>
+
+            <!-- Calories Chart -->
+            <Border Grid.Row="6"
+                    Background="White"
+                    CornerRadius="18"
+                    Padding="20"
+                    MinHeight="260">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="14"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Calories Consumed vs Burned"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="#111827"
+                               VerticalAlignment="Center"/>
+
+                    <lvc:CartesianChart x:Name="CalorieChart"
+                    Grid.Row="2"
+                    Series="{Binding CalorieSeries}"
+                    XAxes="{Binding CalorieXAxes}"
+                    YAxes="{Binding CalorieYAxes}" />
                 </Grid>
             </Border>
         </Grid>

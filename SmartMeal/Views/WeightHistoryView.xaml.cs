@@ -1,18 +1,3 @@
-// WeightHistoryView shows the user's full weight history as a line graph
-// and provides a form to log a new weigh-in.
-//
-// Layout:
-//   Top right  — "Latest Weight" card (most recent entry)
-//   Middle     — Log Weight inline form (weight kg + optional notes + button)
-//   Bottom     — Line graph with 7 Days / 30 Days / All Time filter buttons
-//
-// Data source: public.weight_logs table in Supabase, fetched via WeightLogService.
-// The chart is drawn directly on a WPF Canvas using Shapes (Polyline, Ellipse, Line)
-// — no external charting library is required.
-//
-// The starting weight entered at registration appears as the first data point.
-// Subsequent weigh-ins logged here appear as additional points on the graph.
-
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -20,6 +5,8 @@ using System.Windows.Shapes;
 using SmartMeal.Helpers;
 using SmartMeal.core.Models;
 using SmartMeal.core.Services;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
 
 namespace SmartMeal.Views
 {
@@ -29,18 +16,18 @@ namespace SmartMeal.Views
         private readonly WeightLogService _weightLogService;
         private readonly GoalService _goalService;
         private readonly AuthService _authService;
+        private readonly MealService _mealService;
+        private readonly ActService _activityService;
+        private readonly FoodService _foodService;
 
-        // All logs loaded from the DB, sorted oldest-first (for correct chart direction).
         private List<WeightLog> _allLogs = new();
-
-        // The subset currently shown on the chart after the time filter is applied.
         private List<WeightLog> _displayedLogs = new();
-
-        // 0 means "all time"; any other value is a day count cutoff from now.
         private int _filterDays = 0;
-
-        // Null when the user has not set a weight goal yet.
         private decimal? _targetWeight = null;
+
+        public ISeries[] CalorieSeries { get; set; } = Array.Empty<ISeries>();
+        public Axis[] CalorieXAxes { get; set; } = Array.Empty<Axis>();
+        public Axis[] CalorieYAxes { get; set; } = Array.Empty<Axis>();
 
         public WeightHistoryView()
         {
@@ -49,20 +36,21 @@ namespace SmartMeal.Views
             _weightLogService = _mainWindow.WeightLogService;
             _goalService = _mainWindow.GoalService;
             _authService = _mainWindow.AuthService;
+            _mealService = _mainWindow.MealService;
+            _activityService = _mainWindow.ActService;
+            _foodService = _mainWindow.FoodService;
+
+            DataContext = this;
             Loaded += WeightHistoryView_Loaded;
         }
 
-        // Fires once when the view is on screen. Immediately unsubscribes to prevent
-        // double-loading if the control is ever detached and re-attached.
         private async void WeightHistoryView_Loaded(object sender, RoutedEventArgs e)
         {
             Loaded -= WeightHistoryView_Loaded;
             await LoadWeightLogsAsync();
+            await LoadCalorieChartAsync();
         }
 
-        // Fetches weight logs and the user's goal in parallel, then triggers a redraw.
-        // GetWeightLogsByUserAsync returns rows in DESC order (newest first), so we reverse
-        // them here to get oldest-first, which is the correct direction for a time-series graph.
         private async Task LoadWeightLogsAsync()
         {
             if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
@@ -91,7 +79,129 @@ namespace SmartMeal.Views
             }
         }
 
-        // Updates the "Target Weight" stat card in the header.
+        private async Task LoadCalorieChartAsync()
+        {
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
+                return;
+
+            try
+            {
+                var logs = await _mealService.GetAllLogsAsync(userId);
+                var activities = await _activityService.GetActivitiesByUserAsync(userId);
+                var foods = await _foodService.GetAccessibleFoodsAsync(userId);
+
+                var foodCaloriesById = new Dictionary<long, decimal>();
+
+                foreach (var food in foods)
+                {
+                    foodCaloriesById[food.FoodId] = food.CaloriesPer100g;
+                }
+
+                var consumedByDate = new Dictionary<string, double>();
+                var burnedByDate = new Dictionary<string, double>();
+
+                // Calculate consumed calories from meal logs
+                foreach (var log in logs)
+                {
+                    string date = log.LogDate;
+
+                    if (!consumedByDate.ContainsKey(date))
+                        consumedByDate[date] = 0;
+
+                    if (foodCaloriesById.TryGetValue(log.FoodId, out var caloriesPer100g))
+                    {
+                        double totalCalories =
+                            (double)(caloriesPer100g * log.Grams / 100m);
+
+                        consumedByDate[date] += totalCalories;
+                    }
+                }
+
+                // Calculate burned calories from activities
+                foreach (var activity in activities)
+                {
+                    string date = activity.LoggedAt
+                        .ToLocalTime()
+                        .ToString("yyyy-MM-dd");
+
+                    if (!burnedByDate.ContainsKey(date))
+                        burnedByDate[date] = 0;
+
+                    burnedByDate[date] += activity.CaloriesBurned;
+                }
+
+                // Merge all dates
+                var allDates = consumedByDate.Keys
+                    .Union(burnedByDate.Keys)
+                    .OrderBy(d => d)
+                    .ToList();
+
+                var consumedValues = new List<double>();
+                var burnedValues = new List<double>();
+                var labels = new List<string>();
+
+                foreach (var date in allDates)
+                {
+                    labels.Add(DateTime.Parse(date).ToString("MMM d"));
+
+                    consumedValues.Add(
+                        consumedByDate.ContainsKey(date)
+                            ? consumedByDate[date]
+                            : 0
+                    );
+
+                    burnedValues.Add(
+                        burnedByDate.ContainsKey(date)
+                            ? burnedByDate[date]
+                            : 0
+                    );
+                }
+
+                CalorieSeries = new ISeries[]
+                {
+            new LineSeries<double>
+            {
+                Values = consumedValues,
+                Name = "Calories Consumed"
+            },
+
+            new LineSeries<double>
+            {
+                Values = burnedValues,
+                Name = "Calories Burned"
+            }
+                };
+
+                CalorieXAxes = new Axis[]
+                {
+            new Axis
+            {
+                Labels = labels,
+                LabelsRotation = 15
+            }
+                };
+
+                CalorieYAxes = new Axis[]
+                {
+            new Axis
+            {
+                Name = "Calories"
+            }
+                };
+                CalorieChart.Series = CalorieSeries;
+                CalorieChart.XAxes = CalorieXAxes;
+                CalorieChart.YAxes = CalorieYAxes;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not load calorie chart: {ex.Message}",
+                    "Chart Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
         private void UpdateTargetWeightLabel()
         {
             TargetWeightBlock.Text = _targetWeight.HasValue
@@ -99,7 +209,6 @@ namespace SmartMeal.Views
                 : "—";
         }
 
-        // Slices _allLogs based on the selected time filter and redraws the chart.
         private void ApplyFilter()
         {
             if (_filterDays == 0)
@@ -109,15 +218,15 @@ namespace SmartMeal.Views
                 var cutoff = DateTime.UtcNow.AddDays(-_filterDays);
                 _displayedLogs = _allLogs.Where(l => l.LoggedAt >= cutoff).ToList();
             }
+
             DrawChart(_displayedLogs);
         }
 
-        // Updates the "Latest Weight" stat card in the top-right corner.
         private void UpdateLatestWeightLabel()
         {
             if (_allLogs.Count > 0)
             {
-                var latest = _allLogs[^1]; // last element = most recent
+                var latest = _allLogs[^1];
                 LatestWeightBlock.Text = $"{latest.WeightKg:F1} kg";
                 LatestWeightDateBlock.Text = latest.LoggedAt.ToLocalTime().ToString("MMM d, yyyy");
             }
@@ -128,8 +237,6 @@ namespace SmartMeal.Views
             }
         }
 
-        // Fires when the user clicks "Log Weight".
-        // Validates the weight field, inserts a row via WeightLogService, then reloads the chart.
         private async void LogWeight_Click(object sender, RoutedEventArgs e)
         {
             if (!decimal.TryParse(WeightInputTextBox.Text.Trim(), out decimal weight) || weight <= 0)
@@ -147,13 +254,16 @@ namespace SmartMeal.Views
             try
             {
                 var notes = NotesTextBox.Text.Trim();
+
                 if (string.IsNullOrEmpty(notes))
                     await _weightLogService.AddWeightLogAsync(userId, weight, null);
                 else
                     await _weightLogService.AddWeightLogAsync(userId, weight, notes);
+
                 WeightInputTextBox.Clear();
                 NotesTextBox.Clear();
-                await LoadWeightLogsAsync(); // reload and redraw
+                await LoadWeightLogsAsync();
+                await LoadCalorieChartAsync();
             }
             catch (Exception ex)
             {
@@ -164,8 +274,6 @@ namespace SmartMeal.Views
                     MessageBoxImage.Error);
             }
         }
-
-        // --- Filter button handlers ---
 
         private void Filter7Days_Click(object sender, RoutedEventArgs e)
         {
@@ -188,7 +296,6 @@ namespace SmartMeal.Views
             ApplyFilter();
         }
 
-        // Sets one filter button to "active" (blue) and resets the others to grey.
         private void HighlightFilterButton(Button active)
         {
             foreach (var btn in new[] { Filter7DaysButton, Filter30DaysButton, FilterAllTimeButton })
@@ -196,43 +303,27 @@ namespace SmartMeal.Views
                 btn.Background = new SolidColorBrush(Color.FromRgb(229, 231, 235));
                 btn.Foreground = new SolidColorBrush(Color.FromRgb(17, 24, 39));
             }
+
             active.Background = new SolidColorBrush(Color.FromRgb(37, 99, 235));
             active.Foreground = Brushes.White;
         }
 
-        // --- Chart drawing ---
-
-        // Fires whenever the ChartAreaGrid changes size (including the initial layout pass).
-        // This is the trigger for redrawing the chart with correct dimensions.
         private void ChartAreaGrid_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             DrawChart(_displayedLogs);
         }
 
-        // Draws the weight line graph on WeightChartCanvas using WPF Shapes.
-        //
-        // The chart consists of:
-        //   - Horizontal gridlines at even weight intervals
-        //   - Y-axis labels (weight values)
-        //   - X-axis labels (dates)
-        //   - A subtle fill polygon under the line
-        //   - A Polyline connecting all data points
-        //   - Filled Ellipse dots at each data point
-        //   - A weight label above each dot
         private void DrawChart(List<WeightLog> logs)
         {
             WeightChartCanvas.Children.Clear();
 
-            // Use the parent Grid's size — Canvas doesn't report its own size until after a draw.
             double w = ChartAreaGrid.ActualWidth;
             double h = ChartAreaGrid.ActualHeight;
 
-            // Not yet laid out — the SizeChanged event will fire again once it is.
             if (w < 20 || h < 20) return;
 
             if (logs.Count == 0)
             {
-                // Show a friendly empty-state message centred in the canvas.
                 var msg = new TextBlock
                 {
                     Text = "No weight data for this period.\nLog your first weigh-in above.",
@@ -242,26 +333,24 @@ namespace SmartMeal.Views
                     TextAlignment = TextAlignment.Center,
                     Width = w * 0.5
                 };
+
                 Canvas.SetLeft(msg, w * 0.25);
                 Canvas.SetTop(msg, h / 2 - 20);
                 WeightChartCanvas.Children.Add(msg);
                 return;
             }
 
-            // Padding around the chart area to leave room for axis labels.
-            const double padL = 58;  // left: room for Y-axis labels
+            const double padL = 58;
             const double padR = 20;
             const double padT = 20;
-            const double padB = 40;  // bottom: room for X-axis date labels
+            const double padB = 40;
 
             double chartW = w - padL - padR;
             double chartH = h - padT - padB;
 
-            // --- Value ranges ---
             double minW = (double)logs.Min(l => l.WeightKg);
             double maxW = (double)logs.Max(l => l.WeightKg);
 
-            // Extend the range to include the target weight so the dashed line is always visible.
             if (_targetWeight.HasValue)
             {
                 double tw = (double)_targetWeight.Value;
@@ -270,9 +359,8 @@ namespace SmartMeal.Views
             }
 
             double range = maxW - minW;
-            if (range < 2) range = 2; // minimum range so a single data point isn't at the canvas edge
+            if (range < 2) range = 2;
 
-            // Add 12% padding above and below the data range so the line isn't clipped.
             double yMin = minW - range * 0.12;
             double yMax = maxW + range * 0.12;
 
@@ -280,11 +368,9 @@ namespace SmartMeal.Views
             var maxDate = logs.Max(l => l.LoggedAt);
             double totalDays = Math.Max((maxDate - minDate).TotalDays, 1);
 
-            // Convert a data value to a canvas pixel coordinate.
             double ToX(DateTime dt) => padL + (dt - minDate).TotalDays / totalDays * chartW;
             double ToY(double kg) => padT + (1.0 - (kg - yMin) / (yMax - yMin)) * chartH;
 
-            // --- Horizontal gridlines + Y-axis labels ---
             const int gridCount = 5;
             for (int i = 0; i <= gridCount; i++)
             {
@@ -293,7 +379,10 @@ namespace SmartMeal.Views
 
                 WeightChartCanvas.Children.Add(new Line
                 {
-                    X1 = padL, Y1 = y, X2 = padL + chartW, Y2 = y,
+                    X1 = padL,
+                    Y1 = y,
+                    X2 = padL + chartW,
+                    Y2 = y,
                     Stroke = new SolidColorBrush(Color.FromRgb(229, 231, 235)),
                     StrokeThickness = 1
                 });
@@ -304,16 +393,15 @@ namespace SmartMeal.Views
                     FontSize = 11,
                     Foreground = new SolidColorBrush(Color.FromRgb(107, 114, 128))
                 };
+
                 Canvas.SetLeft(yLabel, 2);
                 Canvas.SetTop(yLabel, y - 8);
                 WeightChartCanvas.Children.Add(yLabel);
             }
 
-            // --- X-axis date labels ---
-            // Show up to 7 labels spread evenly across the date range.
-            // Skip labels that would overlap with the previous one (<50px gap).
             int xLabelTarget = Math.Min(logs.Count, 7);
             var usedX = new List<double>();
+
             for (int i = 0; i < xLabelTarget; i++)
             {
                 int idx;
@@ -325,6 +413,7 @@ namespace SmartMeal.Views
                 {
                     idx = (int)Math.Round((double)i / (xLabelTarget - 1) * (logs.Count - 1));
                 }
+
                 idx = Math.Clamp(idx, 0, logs.Count - 1);
 
                 double x = ToX(logs[idx].LoggedAt);
@@ -337,43 +426,45 @@ namespace SmartMeal.Views
                     FontSize = 11,
                     Foreground = new SolidColorBrush(Color.FromRgb(107, 114, 128))
                 };
+
                 Canvas.SetLeft(xLabel, x - 22);
                 Canvas.SetTop(xLabel, padT + chartH + 8);
                 WeightChartCanvas.Children.Add(xLabel);
             }
 
-            // --- Area fill (light blue polygon under the line) ---
             if (logs.Count > 1)
             {
                 var areaPoints = new PointCollection();
-                // Start at bottom-left of the first point, trace the line, close at bottom-right.
                 areaPoints.Add(new Point(ToX(logs[0].LoggedAt), padT + chartH));
+
                 foreach (var log in logs)
                     areaPoints.Add(new Point(ToX(log.LoggedAt), ToY((double)log.WeightKg)));
+
                 areaPoints.Add(new Point(ToX(logs[^1].LoggedAt), padT + chartH));
 
                 WeightChartCanvas.Children.Add(new Polygon
                 {
                     Points = areaPoints,
-                    Fill = new SolidColorBrush(Color.FromArgb(25, 37, 99, 235)), // very translucent blue
+                    Fill = new SolidColorBrush(Color.FromArgb(25, 37, 99, 235)),
                     Stroke = Brushes.Transparent
                 });
             }
 
-            // --- Target weight dashed line (amber) ---
             if (_targetWeight.HasValue)
             {
                 double ty = ToY((double)_targetWeight.Value);
+
                 var targetLine = new Line
                 {
                     X1 = padL,
                     Y1 = ty,
                     X2 = padL + chartW,
                     Y2 = ty,
-                    Stroke = new SolidColorBrush(Color.FromRgb(245, 158, 11)), // amber
+                    Stroke = new SolidColorBrush(Color.FromRgb(245, 158, 11)),
                     StrokeThickness = 1.8,
                     StrokeDashArray = new DoubleCollection { 6, 4 }
                 };
+
                 WeightChartCanvas.Children.Add(targetLine);
 
                 var targetLabel = new TextBlock
@@ -383,12 +474,12 @@ namespace SmartMeal.Views
                     FontWeight = FontWeights.SemiBold,
                     Foreground = new SolidColorBrush(Color.FromRgb(245, 158, 11))
                 };
+
                 Canvas.SetLeft(targetLabel, padL + 4);
                 Canvas.SetTop(targetLabel, ty - 16);
                 WeightChartCanvas.Children.Add(targetLabel);
             }
 
-            // --- Line ---
             if (logs.Count > 1)
             {
                 var line = new Polyline
@@ -397,18 +488,18 @@ namespace SmartMeal.Views
                     StrokeThickness = 2.5,
                     StrokeLineJoin = PenLineJoin.Round
                 };
+
                 foreach (var log in logs)
                     line.Points.Add(new Point(ToX(log.LoggedAt), ToY((double)log.WeightKg)));
+
                 WeightChartCanvas.Children.Add(line);
             }
 
-            // --- Data points (dots + weight labels) ---
             foreach (var log in logs)
             {
                 double x = ToX(log.LoggedAt);
                 double y = ToY((double)log.WeightKg);
 
-                // White-bordered filled circle
                 var dot = new Ellipse
                 {
                     Width = 9,
@@ -417,11 +508,11 @@ namespace SmartMeal.Views
                     Stroke = Brushes.White,
                     StrokeThickness = 2
                 };
+
                 Canvas.SetLeft(dot, x - 4.5);
                 Canvas.SetTop(dot, y - 4.5);
                 WeightChartCanvas.Children.Add(dot);
 
-                // Weight value label above the dot
                 var label = new TextBlock
                 {
                     Text = $"{log.WeightKg:F1}",
@@ -429,6 +520,7 @@ namespace SmartMeal.Views
                     FontWeight = FontWeights.SemiBold,
                     Foreground = new SolidColorBrush(Color.FromRgb(37, 99, 235))
                 };
+
                 Canvas.SetLeft(label, x - 14);
                 Canvas.SetTop(label, y - 22);
                 WeightChartCanvas.Children.Add(label);
