@@ -253,6 +253,12 @@ All tables live in the `public` schema in Supabase (PostgreSQL).
 
 ### 1. Clone the repository
 ```bash
+git clone https://github.com/SadmanUddin/Smart-Meal-Fitness-Tracker.git
+cd Smart-Meal-Fitness-Tracker
+```
+or
+
+```bash
 git clone https://github.com/mintyfizz/Smart-Meal-Fitness-Tracker.git
 cd Smart-Meal-Fitness-Tracker
 ```
