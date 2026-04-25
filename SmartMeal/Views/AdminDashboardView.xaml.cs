@@ -1,16 +1,3 @@
-// AdminDashboardView is the admin-only screen for user management.
-//
-// Features:
-//   - Loads all users (requires admin RLS policy)
-//   - Shows total / active / banned user counts
-//   - Allows ban/unban toggling per user
-//   - Lets admin sign out
-//
-// Security assumptions:
-//   - Login routing only navigates here when CurrentUser.Role == "admin"
-//     and CurrentUser.IsBanned == false
-//   - RLS policies still enforce admin access server-side
-
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
