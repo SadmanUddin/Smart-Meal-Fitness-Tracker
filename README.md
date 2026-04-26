@@ -313,7 +313,11 @@ This project uses LiveChartsCore for data visualisation (calories consumed vs bu
 
 Install the following packages in the SmartMeal (WPF) project:
 
-bash dotnet add package LiveChartsCore.SkiaSharpView.WPF dotnet add package SkiaSharp dotnet add package SkiaSharp.Views.WPF 
+```bash
+dotnet add package LiveChartsCore.SkiaSharpView.WPF
+dotnet add package SkiaSharp
+dotnet add package SkiaSharp.Views.WPF
+``` 
 
 Or via Visual Studio:
 
