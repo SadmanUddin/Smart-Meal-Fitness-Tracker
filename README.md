@@ -307,6 +307,43 @@ Or use `supabase.config.json` (copy from `supabase.config.example.json`):
   "GeminiApiKey": "your-gemini-key"
 }
 ```
+### 4. Install Required NuGet Packages
+
+This project uses LiveChartsCore for data visualisation (calories consumed vs burned chart).
+
+Install the following packages in the SmartMeal (WPF) project:
+
+bash dotnet add package LiveChartsCore.SkiaSharpView.WPF dotnet add package SkiaSharp dotnet add package SkiaSharp.Views.WPF 
+
+Or via Visual Studio:
+
+1. Right-click SmartMeal (WPF project)
+2. Click Manage NuGet Packages
+3. Install:
+   - LiveChartsCore.SkiaSharpView.WPF
+   - SkiaSharp
+   - SkiaSharp.Views.WPF
+
+---
+
+### ⚠️ Important Notes
+
+- These packages are required for charts to render
+- If missing, you will get runtime errors like:
+
+Could not load file or assembly 'SkiaSharp'
+
+- Make sure all three packages are installed — not just LiveCharts
+
+---
+
+### 🧠 Why these are needed
+
+| Package | Purpose |
+|--------|--------|
+| LiveChartsCore.SkiaSharpView.WPF | Chart library for WPF |
+| SkiaSharp | Rendering engine |
+| SkiaSharp.Views.WPF | WPF integration layer |
 
 ---
 
