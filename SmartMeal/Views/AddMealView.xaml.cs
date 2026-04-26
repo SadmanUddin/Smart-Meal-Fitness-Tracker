@@ -226,7 +226,7 @@ namespace SmartMeal.Views
             _mainWindow.Navigate(new MealsView());
 
         private void Activities_Click(object sender, RoutedEventArgs e) =>
-            _mainWindow.Navigate(new AddActivityView());
+            _mainWindow.Navigate(new ActivitiesView());
 
         private void History_Click(object sender, RoutedEventArgs e) =>
             _mainWindow.Navigate(new WeightHistoryView());

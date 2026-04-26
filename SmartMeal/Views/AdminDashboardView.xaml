@@ -13,7 +13,6 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
         <Border Grid.Column="0"
                 Background="#111827"
                 Padding="24">
@@ -28,7 +27,6 @@
                            FontSize="13"
                            Margin="0,0,0,30"/>
 
-                <!-- Users — current page (no click handler, highlighted blue) -->
                 <Button Content="Users"
                         Height="42"
                         Margin="0,0,0,12"
@@ -48,7 +46,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Main Content -->
+        
         <Grid Grid.Column="1" Margin="28">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -56,9 +54,12 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="20"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="20"/>
+                <RowDefinition Height="*"/>
+                
             </Grid.RowDefinitions>
 
-            <!-- Header -->
+            
             <StackPanel Grid.Row="0">
                 <TextBlock Text="User Management"
                            FontSize="30"
@@ -72,62 +73,29 @@
 
             <!-- Stats Cards -->
             <UniformGrid Grid.Row="2" Columns="3" Margin="0">
-                <Border Background="White"
-                        CornerRadius="16"
-                        Margin="0,0,16,0"
-                        Padding="20">
+                <Border Background="White" CornerRadius="16" Margin="0,0,16,0" Padding="20">
                     <StackPanel>
-                        <TextBlock Text="Total Users"
-                                   FontSize="13"
-                                   Foreground="#6B7280"/>
-                        <TextBlock x:Name="TotalUsersBlock"
-                                   Text="—"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Foreground="#111827"
-                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="Total Users" FontSize="13" Foreground="#6B7280"/>
+                        <TextBlock x:Name="TotalUsersBlock" Text="—" FontSize="28" FontWeight="Bold" Foreground="#111827" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="White"
-                        CornerRadius="16"
-                        Margin="0,0,16,0"
-                        Padding="20">
+                <Border Background="White" CornerRadius="16" Margin="0,0,16,0" Padding="20">
                     <StackPanel>
-                        <TextBlock Text="Active Users"
-                                   FontSize="13"
-                                   Foreground="#6B7280"/>
-                        <TextBlock x:Name="ActiveUsersBlock"
-                                   Text="—"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Foreground="#10B981"
-                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="Active Users" FontSize="13" Foreground="#6B7280"/>
+                        <TextBlock x:Name="ActiveUsersBlock" Text="—" FontSize="28" FontWeight="Bold" Foreground="#10B981" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
 
-                <Border Background="White"
-                        CornerRadius="16"
-                        Padding="20">
+                <Border Background="White" CornerRadius="16" Padding="20">
                     <StackPanel>
-                        <TextBlock Text="Banned Users"
-                                   FontSize="13"
-                                   Foreground="#6B7280"/>
-                        <TextBlock x:Name="BannedUsersBlock"
-                                   Text="—"
-                                   FontSize="28"
-                                   FontWeight="Bold"
-                                   Foreground="#EF4444"
-                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="Banned Users" FontSize="13" Foreground="#6B7280"/>
+                        <TextBlock x:Name="BannedUsersBlock" Text="—" FontSize="28" FontWeight="Bold" Foreground="#EF4444" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
 
-            <!-- Users Table Card -->
-            <Border Grid.Row="4"
-                    Background="White"
-                    CornerRadius="18"
-                    Padding="24">
+            <Border Grid.Row="4" Background="White" CornerRadius="18" Padding="24">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -135,11 +103,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Text="All Users"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="#111827"/>
+                    <TextBlock Text="All Users" FontSize="18" FontWeight="Bold" Foreground="#111827"/>
 
                     <DataGrid x:Name="UsersDataGrid"
                               Grid.Row="2"
@@ -152,53 +116,15 @@
                               GridLinesVisibility="Horizontal"
                               HorizontalGridLinesBrush="#E5E7EB"
                               HeadersVisibility="Column"
-                              CanUserResizeRows="False"
-                              SelectionMode="Single"
                               RowHeight="42">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="White"/>
-                                <Setter Property="Foreground" Value="#6B7280"/>
-                                <Setter Property="FontSize" Value="12"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                <Setter Property="Padding" Value="8,6"/>
-                                <Setter Property="BorderBrush" Value="#E5E7EB"/>
-                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                            </Style>
-                        </DataGrid.ColumnHeaderStyle>
-                        <DataGrid.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="Padding" Value="8,0"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="DataGridCell">
-                                            <Border Padding="{TemplateBinding Padding}"
-                                                    Background="{TemplateBinding Background}">
-                                                <ContentPresenter VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </DataGrid.CellStyle>
+
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Name"
-                                                Binding="{Binding FullName}"
-                                                Width="*"/>
-                            <DataGridTextColumn Header="Email"
-                                                Binding="{Binding Email}"
-                                                Width="*"/>
-                            <DataGridTextColumn Header="Role"
-                                                Binding="{Binding Role}"
-                                                Width="80"/>
-                            <DataGridTextColumn Header="Joined"
-                                                Binding="{Binding JoinedDate}"
-                                                Width="100"/>
-                            <DataGridTextColumn Header="Status"
-                                                Binding="{Binding Status}"
-                                                Width="80"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="*"/>
+                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
+                            <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="80"/>
+                            <DataGridTextColumn Header="Joined" Binding="{Binding JoinedDate}" Width="100"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80"/>
+
                             <DataGridTemplateColumn Header="Action" Width="95">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -209,14 +135,55 @@
                                                 Height="30"
                                                 Background="{Binding ActionColor}"
                                                 Foreground="White"
-                                                BorderThickness="0"
-                                                FontSize="12"
-                                                FontWeight="SemiBold"
-                                                Cursor="Hand"/>
+                                                BorderThickness="0"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            
+            <Border Grid.Row="6"
+                    Background="White"
+                    CornerRadius="18"
+                    Padding="24">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Leaderboard"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="#111827"/>
+
+                    <DataGrid x:Name="LeaderboardGrid"
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              Background="White"
+                              BorderThickness="0"
+                              RowBackground="White"
+                              AlternatingRowBackground="#F9FAFB"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#E5E7EB"
+                              RowHeight="42">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="40"/>
+                            <DataGridTextColumn Header="Name" Binding="{Binding FullName}" Width="*"/>
+                            <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="80"/>
+                            <DataGridTextColumn Header="Active Days" Binding="{Binding ActiveDays}" Width="100"/>
+                            <DataGridTextColumn Header="Meals" Binding="{Binding MealLogs}" Width="80"/>
+                            <DataGridTextColumn Header="Activities" Binding="{Binding ActivityLogs}" Width="90"/>
+                            <DataGridTextColumn Header="Weights" Binding="{Binding WeightLogs}" Width="90"/>
+                        </DataGrid.Columns>
+
                     </DataGrid>
                 </Grid>
             </Border>

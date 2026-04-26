@@ -33,6 +33,8 @@ namespace SmartMeal.Views
 
         private async Task LoadUsersAsync()
         {
+            var leaderboard = await _adminService.GetLeaderboardAsync();
+            LeaderboardGrid.ItemsSource = leaderboard.Take(5).ToList();
             var currentUser = _authService.CurrentUser;
             if (currentUser == null || currentUser.Role != "admin" || currentUser.IsBanned)
             {
