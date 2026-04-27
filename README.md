@@ -129,6 +129,8 @@ SmartMealSolution/
 │   │   ├── User.cs                   → public.users
 │   │   ├── FoodItem.cs               → public.food_items
 │   │   ├── Meal.cs (MealLog)         → public.meal_logs
+│   │   ├── HistoryItem.cs            → public.Histories(Calories)
+│   │   ├── LeaderboardEntry.cs       → Computed
 │   │   ├── MealType.cs               → public.meal_types
 │   │   ├── Goal.cs                   → public.goals
 │   │   ├── Activity.cs               → public.activities
