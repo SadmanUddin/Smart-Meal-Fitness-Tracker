@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.Helpers;
 using SmartMeal.core.Services;
+using SmartMeal.core.Models;
 
 namespace SmartMeal.Views
 {
@@ -123,21 +124,37 @@ namespace SmartMeal.Views
             // --- Activities & Calories Burned (from Supabase) ---
             // GetActivitiesByUserAsync queries public.activities and filters by userId,
             // so only this user's activities are counted.
-            var activities = await _activityService.GetActivitiesByUserAsync(userId);
-            ActivitiesCountBlock.Text = activities.Count.ToString();
+            var allActivities = await _activityService.GetActivitiesByUserAsync(userId);
 
-            var totalCaloriesBurned = activities.Sum(activity => activity.CaloriesBurned);
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+
+            int totalCaloriesBurned = 0;
+            int todayActivityCount = 0;
+            Activity? latestActivity = null;
+
+            foreach (var activity in allActivities)
+            {
+                if (activity.LoggedAt >= today && activity.LoggedAt < tomorrow)
+                {
+                    totalCaloriesBurned += activity.CaloriesBurned;
+                    todayActivityCount++;
+
+                    latestActivity = activity;
+                }
+            }
+
+            ActivitiesCountBlock.Text = todayActivityCount.ToString();
             CaloriesBurnedBlock.Text = totalCaloriesBurned.ToString();
 
-            if (activities.Count > 0)
+            if (latestActivity != null)
             {
-                var latestActivity = activities[^1];
                 RecentActivitiesTextBlock.Text =
                     $"{latestActivity.Name} - {latestActivity.CaloriesBurned} cal burned";
             }
             else
             {
-                RecentActivitiesTextBlock.Text = "No activities added yet.";
+                RecentActivitiesTextBlock.Text = "No activities added today.";
             }
 
             // --- Goal & Balance (from Supabase) ---
