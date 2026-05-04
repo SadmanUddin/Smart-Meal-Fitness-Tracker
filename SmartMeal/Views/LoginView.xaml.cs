@@ -41,7 +41,7 @@ namespace SmartMeal.Views
                 // If login failed, show why and stop — the user needs to correct their input.
                 if (!result.Success)
                 {
-                    MessageBox.Show(result.Message);
+                    MessageBox.Show("Invalid email or password. Please try again.");
                     return;
                 }
 
@@ -81,7 +81,7 @@ namespace SmartMeal.Views
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"An unexpected error occurred during login: {ex.Message}",
+                    $"An unexpected error occurred during login",
                     "Login Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
