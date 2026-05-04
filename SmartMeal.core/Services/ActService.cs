@@ -36,5 +36,35 @@ namespace SmartMeal.core.Services
                 .Where(a => a.ActivityId == activityId)
                 .Delete();
         }
+
+        public async Task<SortedDictionary<string, int>> GetLast7DaysBurnedCaloriesAsync(string userId)
+        {
+            var activities = await _client
+                .From<Activity>()
+                .Where(a => a.UserId == userId)
+                .Get();
+
+            var result = new SortedDictionary<string, int>();
+
+            for (int i = 6; i >= 0; i--)
+            {
+                var date = DateTime.UtcNow.Date.AddDays(-i).ToString("yyyy-MM-dd");
+                int total = 0;
+
+                foreach (var activity in activities.Models)
+                {
+                    var activityDate = activity.LoggedAt.Date.ToString("yyyy-MM-dd");
+
+                    if (activityDate == date)
+                    {
+                        total += activity.CaloriesBurned;
+                    }
+                }
+
+                result[date] = total;
+            }
+
+            return result;
+        }
     }
 }

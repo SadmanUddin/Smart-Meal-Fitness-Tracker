@@ -31,6 +31,7 @@ namespace SmartMeal.Views
         public int AvgCalories { get; set; }
         public int MaxCalories { get; set; }
 
+
         public MealsView()
         {
             InitializeComponent();
@@ -78,6 +79,7 @@ namespace SmartMeal.Views
                 MessageBox.Show($"Could not load meal trend: {ex.Message}");
             }
         }
+
 
         // Fetches all meal logs for the current user, resolves IDs to names,
         // and binds the result to the DataGrid.

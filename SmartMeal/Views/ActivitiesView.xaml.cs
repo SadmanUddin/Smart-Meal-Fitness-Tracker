@@ -10,6 +10,10 @@ namespace SmartMeal.Views
         private readonly MainWindow _mainWindow;
         private readonly ActService _activityService;
         private readonly AuthService _authService;
+        private Dictionary<string,int> _weeklyActivityCalories;
+        public int TotalBurned { get; set; }
+        public int AvgBurned { get; set; }
+        public int MaxBurned { get; set; }
 
         public ActivitiesView()
         {
@@ -26,6 +30,7 @@ namespace SmartMeal.Views
         {
             Loaded -= ActivitiesView_Loaded;
             await LoadActivitiesAsync();
+            await LoadActivityTrendAsync();
         }
 
         private async Task LoadActivitiesAsync()
@@ -64,6 +69,34 @@ namespace SmartMeal.Views
                     MessageBoxImage.Error);
             }
         }
+        private async Task LoadActivityTrendAsync()
+        {
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
+                return;
+
+            try
+            {
+                var data = await _activityService.GetLast7DaysBurnedCaloriesAsync(userId);
+
+                ActivityTrendItemsControl.ItemsSource = data
+                    .OrderBy(x => x.Key)
+                    .Select(x => new ActivityTrendRow
+                    {
+                        Date = x.Key,
+                        Calories = x.Value
+                    })
+                    .ToList();
+
+                TotalBurned = data.Sum(x => x.Value);
+                AvgBurned = data.Count > 0 ? (int)data.Average(x => x.Value) : 0;
+                MaxBurned = data.Count > 0 ? data.Max(x => x.Value) : 0;
+                this.DataContext = this;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not load activity trend: {ex.Message}");
+            }
+        }
 
         private async void DeleteActivity_Click(object sender, RoutedEventArgs e)
         {
@@ -92,6 +125,11 @@ namespace SmartMeal.Views
                     }
                 }
             }
+        }
+        private sealed class ActivityTrendRow
+        {
+            public string Date { get; set; }
+            public int Calories { get; set; }
         }
 
         private void Dashboard_Click(object sender, RoutedEventArgs e)
