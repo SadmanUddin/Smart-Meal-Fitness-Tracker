@@ -68,15 +68,12 @@ namespace SmartMeal.Views
         //   4. goals table (Supabase)      → this user's daily calorie goal
         private async Task LoadDashboardAsync()
         {
-            // Guard: if no user is logged in, zero out every stat and return early.
-            // This shouldn't happen in normal flow — LoginView always sets CurrentUser —
-            // but it's a safe fallback to avoid showing stale or garbage data.
             if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
             {
                 MealsCountBlock.Text = "0";
                 CaloriesConsumedBlock.Text = "0";
                 ActivitiesCountBlock.Text = "0";
-                CaloriesBurnedBlock.Text = "0";
+                CaloriesBurnedBlock.Text = "0";  
                 CaloriesGoalBlock.Text = "0";
                 BalanceBlock.Text = "0";
                 RecentMealsTextBlock.Text = "No meals logged today.";
@@ -121,14 +118,10 @@ namespace SmartMeal.Views
                 RecentMealsTextBlock.Text = "No meals logged today.";
             }
 
-            // --- Activities & Calories Burned (from Supabase) ---
-            // GetActivitiesByUserAsync queries public.activities and filters by userId,
-            // so only this user's activities are counted.
+            //fixed calories burned from all time to daily (sadman)
             var allActivities = await _activityService.GetActivitiesByUserAsync(userId);
-
             var today = DateTime.UtcNow.Date;
             var tomorrow = today.AddDays(1);
-
             int totalCaloriesBurned = 0;
             int todayActivityCount = 0;
             Activity? latestActivity = null;
@@ -245,12 +238,12 @@ namespace SmartMeal.Views
             else if (pct >= 80)
             {
                 color = System.Windows.Media.Color.FromRgb(245, 158, 11);  // amber
-                status = $"{(int)Math.Round(goal - consumed)} kcal remaining";
+                status = $"{(int)Math.Round(consumed)} kcal consumed";
             }
             else
             {
                 color = System.Windows.Media.Color.FromRgb(16, 185, 129);  // green
-                status = $"{(int)Math.Round(goal - consumed)} kcal remaining";
+                status = $"{(int)Math.Round(consumed)} kcal consumed";
             }
 
             var brush = new System.Windows.Media.SolidColorBrush(color);
