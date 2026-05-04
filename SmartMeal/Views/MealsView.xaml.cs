@@ -26,6 +26,10 @@ namespace SmartMeal.Views
         private readonly MealService _mealService;
         private readonly FoodService _foodService; // used to resolve food names and meal type names
         private readonly AuthService _authService;
+        private Dictionary<string, int> _weeklyCalories;
+        public int TotalCalories { get; set; }
+        public int AvgCalories { get; set; }
+        public int MaxCalories { get; set; }
 
         public MealsView()
         {
@@ -45,6 +49,34 @@ namespace SmartMeal.Views
         {
             Loaded -= MealsView_Loaded;
             await LoadMealsAsync();
+            await LoadMealTrendAsync();
+        }
+        private async Task LoadMealTrendAsync()
+        {
+            if (!SessionHelper.TryGetCurrentUserId(_authService, out var userId))
+                return;
+
+            try
+            {
+                var data = await _mealService.GetLast7DaysCaloriesAsync(userId);
+
+                MealTrendItemsControl.ItemsSource = data
+                    .OrderBy(x => x.Key)
+                    .Select(x => new MealTrendRow
+                    {
+                        Date = x.Key,
+                        Calories = x.Value
+                    })
+                    .ToList();
+                TotalCalories = data.Sum(x => x.Value);
+                AvgCalories = (int)data.Average(x => x.Value);
+                MaxCalories = data.Max(x => x.Value);
+                this.DataContext = this; // Update bindings for TotalCalories, AvgCalories, MaxCalories
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not load meal trend: {ex.Message}");
+            }
         }
 
         // Fetches all meal logs for the current user, resolves IDs to names,
@@ -204,6 +236,12 @@ namespace SmartMeal.Views
                 return mealTypeName;
 
             return $"Type {mealTypeId}";
+        }
+
+        private sealed class MealTrendRow
+        {
+            public string Date { get; set; }
+            public int Calories { get; set; }
         }
         //private void Activities_Click(object sender, RoutedEventArgs e)
         //{

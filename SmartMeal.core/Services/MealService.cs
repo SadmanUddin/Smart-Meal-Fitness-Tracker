@@ -103,5 +103,32 @@ namespace SmartMeal.core.Services
                 .Get();
             return result.Models;
         }
+
+        //meal trend method
+        public async Task<Dictionary<string, int>> GetLast7DaysCaloriesAsync(string userId)
+        {
+            var logs = await _client.From<MealLog>().Where(m => m.UserId == userId).Get();
+            var foods = await _client.From<FoodItem>().Get();
+            var foodMap = new Dictionary<long, FoodItem>();
+            foreach (var food in foods.Models)
+            { 
+                foodMap[food.FoodId] = food;
+            }
+            var result = new Dictionary<string, int>();
+            for(int i = 6; i >= 0; i--)
+            {
+                var date = DateTime.UtcNow.Date.AddDays(-i).ToString("yyyy-MM-dd");
+                decimal total = 0;
+                foreach(var log in logs.Models)
+                {
+                        if(log.LogDate == date && foodMap.ContainsKey(log.FoodId)) { 
+                        var food = foodMap[log.FoodId];
+                        total += (log.Grams / 100m) * food.CaloriesPer100g;
+                    }
+                }
+                result[date] = (int)Math.Round(total);
+            }
+            return result;
+        }
     }
 }

@@ -8,81 +8,63 @@
              d:DesignWidth="1280">
 
     <Grid Background="#EEF2F7">
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
+        <!-- SIDEBAR -->
         <Border Grid.Column="0"
                 Background="#111827"
                 Padding="24">
+
             <StackPanel>
+
                 <TextBlock Text="Smart Meal"
                            Foreground="White"
                            FontSize="24"
                            FontWeight="Bold"
                            Margin="0,0,0,30"/>
 
-                <Button Content="Dashboard"
-                        Height="42"
-                        Margin="0,0,0,12"
-                        Background="#1F2937"
-                        Foreground="White"
+                <Button Content="Dashboard" Height="42" Margin="0,0,0,12"
+                        Background="#1F2937" Foreground="White"
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Dashboard_Click"/>
 
-                <Button Content="Meals"
-                        Height="42"
-                        Margin="0,0,0,12"
+                <Button Content="Meals" Height="42" Margin="0,0,0,12"
                         Background="#2563EB"
                         Foreground="White"
                         BorderThickness="0"
                         FontWeight="SemiBold"
                         Click="AddMeal_Click"/>
 
-                <Button Content="Activities"
-                        Height="42"
-                        Margin="0,0,0,12"
-                        Background="#1F2937"
-                        Foreground="White"
+                <Button Content="Activities" Height="42" Margin="0,0,0,12"
+                        Background="#1F2937" Foreground="White"
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Activities_Click"/>
 
-                <Button Content="History"
-                        Height="42"
-                        Margin="0,0,0,12"
-                        Background="#1F2937"
-                        Foreground="White"
+                <Button Content="History" Height="42" Margin="0,0,0,12"
+                        Background="#1F2937" Foreground="White"
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="History_Click"/>
 
-
-
-
-                <Button Content="Recommendations"
-                        Height="42"
-                        Margin="0,0,0,12"
-                        Background="#1F2937"
-                        Foreground="White"
+                <Button Content="Recommendations" Height="42" Margin="0,0,0,12"
+                        Background="#1F2937" Foreground="White"
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Recommendations_Click"/>
-                <Button Content="Profile"
-                        Height="42"
-                        Margin="0,0,0,12"
-                        Background="#1F2937"
-                        Foreground="White"
+
+                <Button Content="Profile" Height="42" Margin="0,0,0,12"
+                        Background="#1F2937" Foreground="White"
                         BorderBrush="#374151"
                         FontWeight="SemiBold"
                         Click="Profile_Click"/>
 
-                <Button Content="Log Out"
-                        Height="42"
-                        Margin="0,0,0,12"   
+                <Button Content="Log Out" Height="42" Margin="0,0,0,12"
                         Background="#1F2937"
                         Foreground="White"
                         BorderBrush="#374151"
@@ -90,31 +72,38 @@
                         Click="BackToLog_Click"/>
 
             </StackPanel>
+
         </Border>
 
-        <!-- Main Content -->
+        <!-- MAIN AREA -->
         <Grid Grid.Column="1" Margin="28">
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="24"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
+            <!-- HEADER -->
             <Grid>
+
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Meals" 
+
+                    <TextBlock Text="Meals"
                                FontSize="30"
                                FontWeight="Bold"
                                Foreground="#111827"/>
+
                     <TextBlock Text="View and manage your saved meals."
                                FontSize="14"
                                Foreground="#6B7280"
                                Margin="0,6,0,0"/>
+
                 </StackPanel>
 
                 <Button Grid.Column="1"
@@ -124,42 +113,152 @@
                         Background="#2563EB"
                         Foreground="White"
                         BorderThickness="0"
-                        FontWeight="SemiBold"
                         Click="AddMeal_Click"/>
+
             </Grid>
 
             <Border Grid.Row="2"
                     Background="White"
                     CornerRadius="18"
                     Padding="20">
-                <DataGrid x:Name="MealsDataGrid"
-                          AutoGenerateColumns="False"
-                          CanUserAddRows="False"
-                          IsReadOnly="True"
-                          HeadersVisibility="Column"
-                          RowHeight="40">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Food" Binding="{Binding FoodName}" Width="*"/>
-                        <DataGridTextColumn Header="Grams" Binding="{Binding Grams}" Width="120"/>
-                        <DataGridTextColumn Header="Meal Type" Binding="{Binding MealTypeName}" Width="140"/>
-                        <DataGridTextColumn Header="Date" Binding="{Binding LogDate}" Width="180"/>
-                        <DataGridTemplateColumn Header="Action" Width="120">
-                            <DataGridTemplateColumn.CellTemplate>
+
+                <StackPanel>
+
+                    <DataGrid x:Name="MealsDataGrid"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              RowHeight="40"
+                              MaxHeight="320"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto">
+
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="Food"
+                                                Binding="{Binding FoodName}"
+                                                Width="*"/>
+
+                            <DataGridTextColumn Header="Grams"
+                                                Binding="{Binding Grams}"
+                                                Width="120"/>
+
+                            <DataGridTextColumn Header="Meal Type"
+                                                Binding="{Binding MealTypeName}"
+                                                Width="140"/>
+
+                            <DataGridTextColumn Header="Date"
+                                                Binding="{Binding LogDate}"
+                                                Width="180"/>
+
+                            <DataGridTemplateColumn Header="Action" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+
+                                        <Button Content="Delete"
+                                                Width="80"
+                                                Height="28"
+                                                Background="#EF4444"
+                                                Foreground="White"
+                                                BorderThickness="0"
+                                                Tag="{Binding MealLogId}"
+                                                Click="DeleteMeal_Click"/>
+
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+
+                    </DataGrid>
+
+                    <StackPanel Margin="0,20,0,0">
+
+                        <!-- SUMMARY -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+
+                            <Border Background="#EEF2FF" Padding="12" CornerRadius="10" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="Total Calories" Foreground="#4F46E5"/>
+                                    <TextBlock Text="{Binding TotalCalories}" FontSize="16" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#ECFDF5" Padding="12" CornerRadius="10" Margin="0,0,10,0">
+                                <StackPanel>
+                                    <TextBlock Text="Average" Foreground="#059669"/>
+                                    <TextBlock Text="{Binding AvgCalories}" FontSize="16" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#FEF2F2" Padding="12" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock Text="Peak Day" Foreground="#DC2626"/>
+                                    <TextBlock Text="{Binding MaxCalories}" FontSize="16" FontWeight="Bold"/>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+
+                        <!-- TREND -->
+                        <TextBlock Text="Last 7 Days Calories"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="#111827"
+                                   Margin="0,0,0,12"/>
+
+                        <ItemsControl x:Name="MealTrendItemsControl">
+
+                            <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Content="Delete"
-                                            Width="80"
-                                            Height="28"
-                                            Background="#EF4444"
-                                            Foreground="White"
-                                            BorderThickness="0"
-                                            Tag="{Binding MealLogId}"
-                                            Click="DeleteMeal_Click"/>
+
+                                    <Border Background="#F9FAFB"
+                                            CornerRadius="10"
+                                            Padding="10"
+                                            Margin="0,6">
+
+                                        <Grid>
+
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="80"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{Binding Date}"
+                                                       Foreground="#6B7280"
+                                                       VerticalAlignment="Center"/>
+
+                                            <ProgressBar Grid.Column="1"
+                                                         Value="{Binding Calories}"
+                                                         Maximum="3000"
+                                                         Height="14"
+                                                         VerticalAlignment="Center"/>
+
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding Calories}"
+                                                       FontWeight="Bold"
+                                                       HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center"/>
+
+                                        </Grid>
+
+                                    </Border>
+
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                            </ItemsControl.ItemTemplate>
+
+                        </ItemsControl>
+
+                    </StackPanel>
+
+                </StackPanel>
+
             </Border>
+
         </Grid>
+
     </Grid>
+
 </UserControl>
