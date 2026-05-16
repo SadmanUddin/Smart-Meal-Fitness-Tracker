@@ -1,14 +1,3 @@
-// RegisterView is the account creation screen.
-// The user fills in their name, email, password, and optional profile details
-// (age, gender, height, starting weight), then clicks Register.
-// On success they are redirected to LoginView to sign in with their new account.
-//
-// Profile fields are optional — the user can leave them blank and fill them in later.
-// If a starting weight is entered, it is saved to the weight_logs table as the
-// baseline entry that appears at the start of the weight history graph.
-//
-// Existing users can click the "Already have an account? Login" link to skip registration.
-
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

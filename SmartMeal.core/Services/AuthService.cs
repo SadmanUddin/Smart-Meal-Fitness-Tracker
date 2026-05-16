@@ -1,12 +1,3 @@
-// AuthService handles everything related to who is using the app.
-// It is responsible for two things:
-//   1. Talking to Supabase Auth to create accounts, sign in, and sign out.
-//   2. Holding the currently logged-in user's profile in memory (CurrentUser)
-//      so any view can read it without making another database call.
-//
-// Every view that needs to know "who is logged in?" reads AuthService.CurrentUser.
-// If CurrentUser is null, no one is logged in and the user should be redirected to LoginView.
-
 using SmartMeal.core.Models;
 using System.Collections;
 using System.Text.Json;
@@ -103,7 +94,20 @@ namespace SmartMeal.core.Services
                 if (!string.IsNullOrWhiteSpace(_emailRedirectUrl))
                     signUpOptions.RedirectTo = _emailRedirectUrl;
 
-                // Ask Supabase Auth to create the account.
+                //var session = await _client.Auth.SignUp(cleanedEmail, password, signUpOptions);
+
+                //if (session?.User == null || string.IsNullOrWhiteSpace(session.User.Id))
+                //{
+                //    return (false, "Registration failed.");
+                //}
+
+                //// Detect duplicate email situation
+                //if (!string.IsNullOrWhiteSpace(session.User.Email) &&
+                //    session.User.EmailConfirmedAt.HasValue == false &&
+                //    session.AccessToken == null)
+                //{
+                //    return (false, "This email is already registered.");
+                //}
                 var session = await _client.Auth.SignUp(cleanedEmail, password, signUpOptions);
                 if (session?.User?.Id == null)
                     return (false, "Registration failed. Please try again.");
@@ -150,8 +154,6 @@ namespace SmartMeal.core.Services
 
             try
             {
-                // Supabase Auth verifies the credentials and returns a session with a JWT token.
-                // That token is automatically included in all subsequent API calls by the SDK.
                 var session = await _client.Auth.SignIn(cleanedEmail, password);
                 if (session?.User?.Id == null)
                     return (false, "Invalid email or password.");
