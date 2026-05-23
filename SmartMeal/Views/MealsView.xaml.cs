@@ -1,18 +1,3 @@
-// MealsView shows the user's full history of logged meals — not just today's.
-//
-// It fetches all meal_log rows for the current user from Supabase, then enriches them
-// by resolving the food ID and meal type ID to human-readable names using lookup
-// dictionaries built from the foods and meal_types tables.
-//
-// The DataGrid is bound to a list of MealViewRow objects — a small private class
-// defined at the bottom of this file that holds display-ready strings rather than
-// raw integer IDs. This keeps the XAML bindings simple and the grid readable.
-//
-// Rows can be deleted individually. Deletion removes the row from the DB and
-// immediately refreshes the grid.
-//
-// Navigation buttons: Dashboard, Add Meal, Activities, History, Profile.
-
 using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.Helpers;

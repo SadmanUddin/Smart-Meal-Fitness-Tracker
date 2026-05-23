@@ -1,16 +1,3 @@
-// SetGoalView is the form where the user sets (or updates) their daily calorie target.
-//
-// The user enters a single number — their calorie goal for the day.
-// On submit, GoalService upserts the value into the goals table in Supabase:
-//   - If the user already has a goal row → it is UPDATED.
-//   - If they have never set a goal → a new row is INSERTED.
-//
-// This upsert behaviour is safe because the goals table has a UNIQUE constraint on
-// user_id, so there can only ever be one goal row per user.
-//
-// After saving, the user is returned to the Dashboard where the new goal is reflected
-// immediately in the "Goal" stat block and the Balance calculation.
-
 using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.Helpers;

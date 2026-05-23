@@ -1,15 +1,3 @@
-// AdminService provides admin-only database operations.
-//
-// All methods rely on Supabase RLS policies that gate access to users whose
-// own users row has role = 'admin'. A regular user's JWT will be rejected by
-// the policy, so these queries simply return no data or throw for non-admins.
-//
-// Operations:
-//   GetAllUsersAsync   — returns every row in public.users (requires admin RLS)
-//   SetBannedAsync     — sets is_banned on a single user row (requires admin RLS)
-//   GetTotalMealLogsCountAsync   — total meal_log rows across all users
-//   GetTotalActivitiesCountAsync — total activity rows across all users
-
 using SmartMeal.core.Models;
 using Supabase;
 

@@ -1,16 +1,3 @@
-// AddMealView is the form where the user logs a new meal entry.
-//
-// The user:
-//   1. Types a food name into the search box — USDA FoodData Central is queried
-//      after a 400ms debounce, returning up to 20 matching foods.
-//   2. Clicks a result to select it (shown as a chip below the search box).
-//   3. Enters how many grams they ate.
-//   4. Picks a meal type (Breakfast, Lunch, Dinner, Snack).
-//
-// On submit, the selected USDA food is upserted into food_items (insert if new,
-// reuse if already cached) and a row is inserted into meal_logs.
-// On success, the user is returned to the Dashboard where the new meal appears.
-
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;

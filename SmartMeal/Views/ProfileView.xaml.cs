@@ -1,15 +1,3 @@
-// ProfileView lets the logged-in user view and edit their profile fields.
-//
-// Editable fields map directly to public.users columns:
-//   - full_name (required)
-//   - age (optional)
-//   - height_cm (optional)
-//   - weight_kg (optional)
-//   - gender (optional: male/female/other)
-//
-// Save uses AuthService.UpdateCurrentUserProfileAsync so CurrentUser stays synced
-// after the database update.
-
 using System.Windows;
 using System.Windows.Controls;
 using SmartMeal.core.Services;

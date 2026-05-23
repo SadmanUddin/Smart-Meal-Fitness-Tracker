@@ -1,16 +1,3 @@
-// GoalService manages the user's fitness goals in the Supabase database.
-//
-// Each user has exactly ONE goal row in the goals table (enforced by a UNIQUE constraint
-// on the user_id column). This means:
-//   - The first time a user sets a goal  → we INSERT a new row.
-//   - Every subsequent time they change it → we UPDATE the existing row.
-//
-// The UpsertGoalAsync method handles both cases automatically by checking first.
-//
-// Currently only the calorie_goal column is used by the UI, but the Goal model and
-// the database table support protein, carbs, fat, and target weight goals too —
-// they just need UI forms to go with them.
-
 using SmartMeal.core.Models;
 using Supabase;
 
