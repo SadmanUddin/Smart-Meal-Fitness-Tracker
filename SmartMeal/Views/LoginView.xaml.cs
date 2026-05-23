@@ -65,7 +65,7 @@ namespace SmartMeal.Views
                     }
 
                     MessageBox.Show(
-                        "Your account has been suspended. Please contact support.",
+                        "Your account has been suspended. Please contact smartmealadmin@gmail.com.",
                         "Account Suspended",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
